@@ -7,3 +7,9 @@ CREATE POLICY "Upload Access" ON storage.objects FOR INSERT WITH CHECK (bucket_i
 
 -- records DB 테이블에 atmosphere_images 정보 저장 공간 추가
 ALTER TABLE public.records ADD COLUMN IF NOT EXISTS atmosphere_images text[] DEFAULT '{}'::text[];
+
+-- 커피 가격 컬럼 추가 (orders 테이블)
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0;
+
+-- 카페 총평글 컬럼 추가 (records 테이블)
+ALTER TABLE public.records ADD COLUMN IF NOT EXISTS overall_memo text DEFAULT '';
