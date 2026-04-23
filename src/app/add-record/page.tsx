@@ -1,10 +1,30 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Coffee, MapPin, Calendar, Star, Send, Home, Camera } from "lucide-react";
+import { Coffee, MapPin, Calendar, Star, Send, Home, Camera, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+
+interface CoffeeOrder {
+    drink: string;
+    price: number | "";
+    coffeeRating: number;
+    acidity: number;
+    body: number;
+    sweetness: number;
+    coffeeMemo: string;
+}
+
+const defaultCoffee = (): CoffeeOrder => ({
+    drink: "",
+    price: "",
+    coffeeRating: 3,
+    acidity: 3,
+    body: 3,
+    sweetness: 3,
+    coffeeMemo: "",
+});
 
 export default function AddRecord() {
     const router = useRouter();
@@ -14,14 +34,8 @@ export default function AddRecord() {
     const [location, setLocation] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-    // Coffee order
-    const [drink, setDrink] = useState("");
-    const [price, setPrice] = useState<number | "">("");
-    const [coffeeRating, setCoffeeRating] = useState(3);
-    const [acidity, setAcidity] = useState(3);
-    const [body, setBody] = useState(3);
-    const [sweetness, setSweetness] = useState(3);
-    const [coffeeMemo, setCoffeeMemo] = useState("");
+    // Coffee orders (multiple)
+    const [coffeeOrders, setCoffeeOrders] = useState<CoffeeOrder[]>([defaultCoffee()]);
 
     // Atmosphere
     const [atmosphereImages, setAtmosphereImages] = useState<string[]>([]);
@@ -33,6 +47,19 @@ export default function AddRecord() {
     const [overallMemo, setOverallMemo] = useState("");
 
     const [loading, setLoading] = useState(false);
+
+    const updateCoffee = (index: number, field: keyof CoffeeOrder, value: CoffeeOrder[keyof CoffeeOrder]) => {
+        setCoffeeOrders(prev => prev.map((o, i) => i === index ? { ...o, [field]: value } : o));
+    };
+
+    const addCoffee = () => setCoffeeOrders(prev => [...prev, defaultCoffee()]);
+
+    const removeCoffee = (index: number) => {
+        if (coffeeOrders.length === 1) return;
+        setCoffeeOrders(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const totalPrice = coffeeOrders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -57,6 +84,10 @@ export default function AddRecord() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (coffeeOrders.some(o => !o.drink.trim())) {
+            alert('모든 커피의 이름을 입력해주세요.');
+            return;
+        }
         setLoading(true);
         try {
             const { data: recordData, error: recordError } = await supabase
@@ -81,18 +112,20 @@ export default function AddRecord() {
 
             if (visitError || !visitData?.[0]) throw visitError ?? new Error('visit 생성 실패');
 
+            const ordersPayload = coffeeOrders.map(o => ({
+                visit_id: visitData[0].id,
+                drink_name: o.drink,
+                price: Number(o.price) || 0,
+                rating: o.coffeeRating,
+                acidity: o.acidity,
+                body: o.body,
+                sweetness: o.sweetness,
+                memo: o.coffeeMemo,
+            }));
+
             const { error: orderError } = await supabase
                 .from('orders')
-                .insert([{
-                    visit_id: visitData[0].id,
-                    drink_name: drink,
-                    price: price || 0,
-                    rating: coffeeRating,
-                    acidity,
-                    body,
-                    sweetness,
-                    memo: coffeeMemo,
-                }])
+                .insert(ordersPayload)
                 .execute();
 
             if (orderError) throw orderError;
@@ -174,65 +207,35 @@ export default function AddRecord() {
 
                     {/* ── SECTION 2: 주문한 커피 ── */}
                     <FormSection title="주문한 커피">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="space-y-2">
-                                <FieldLabel icon={<Coffee size={15} />} text="커피 이름" />
-                                <input
-                                    type="text"
-                                    placeholder="예: 아이스 아메리카노"
-                                    value={drink}
-                                    onChange={e => setDrink(e.target.value)}
-                                    required
-                                    className={inputCls}
+                        <div className="space-y-6">
+                            {coffeeOrders.map((order, index) => (
+                                <CoffeeOrderCard
+                                    key={index}
+                                    index={index}
+                                    order={order}
+                                    total={coffeeOrders.length}
+                                    onChange={(field, value) => updateCoffee(index, field, value)}
+                                    onRemove={() => removeCoffee(index)}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <FieldLabel icon={<span className="text-sm font-bold leading-none">₩</span>} text="가격" />
-                                <input
-                                    type="number"
-                                    placeholder="예: 5500"
-                                    value={price}
-                                    onChange={e => setPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                                    min="0"
-                                    className={inputCls}
-                                />
-                            </div>
-                        </div>
+                            ))}
 
-                        {/* Taste Profile */}
-                        <div className="space-y-4 pt-2">
-                            <p className="text-sm font-bold text-coffee-brown/60">
-                                맛 프로파일 <span className="font-normal text-xs text-coffee-brown/40">(1~5점)</span>
-                            </p>
-                            <RangeSlider label="산미 (Acidity)" value={acidity} onChange={setAcidity} />
-                            <RangeSlider label="바디감 (Body)" value={body} onChange={setBody} />
-                            <RangeSlider label="단맛 (Sweetness)" value={sweetness} onChange={setSweetness} />
-                        </div>
+                            <button
+                                type="button"
+                                onClick={addCoffee}
+                                className="w-full py-3 rounded-xl border-2 border-dashed border-coffee-brown/20 text-coffee-brown/50 hover:border-coffee-brown/40 hover:text-coffee-brown/70 hover:bg-coffee-brown/3 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+                            >
+                                <Plus size={16} /> 커피 추가하기
+                            </button>
 
-                        {/* Coffee Rating */}
-                        <div className="space-y-3 pt-2">
-                            <p className="text-sm font-bold text-coffee-brown/60">커피 평점</p>
-                            <StarPicker value={coffeeRating} onChange={setCoffeeRating} activeClass="bg-coffee-accent text-coffee-brown" />
+                            {totalPrice > 0 && (
+                                <div className="flex items-center justify-between bg-coffee-brown/5 rounded-xl px-5 py-3">
+                                    <span className="text-sm text-coffee-brown/60 font-medium">
+                                        커피구매 총액 <span className="text-xs text-coffee-brown/40">({coffeeOrders.length}잔)</span>
+                                    </span>
+                                    <span className="text-xl font-black text-coffee-brown">₩{totalPrice.toLocaleString()}</span>
+                                </div>
+                            )}
                         </div>
-
-                        {/* Coffee Memo */}
-                        <div className="space-y-2 pt-2">
-                            <p className="text-sm font-bold text-coffee-brown/60">커피 메모</p>
-                            <textarea
-                                placeholder="이 커피의 향, 맛, 느낌을 적어주세요."
-                                value={coffeeMemo}
-                                onChange={e => setCoffeeMemo(e.target.value)}
-                                className="w-full h-28 px-4 py-3 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-coffee-brown/20 transition-all resize-none text-sm"
-                            />
-                        </div>
-
-                        {/* 커피구매 총액 */}
-                        {price !== "" && Number(price) > 0 && (
-                            <div className="flex items-center justify-between bg-coffee-brown/5 rounded-xl px-5 py-3 mt-1">
-                                <span className="text-sm text-coffee-brown/60 font-medium">커피구매 총액</span>
-                                <span className="text-xl font-black text-coffee-brown">₩{Number(price).toLocaleString()}</span>
-                            </div>
-                        )}
                     </FormSection>
 
                     {/* ── SECTION 3: 카페 분위기 ── */}
@@ -292,6 +295,104 @@ export default function AddRecord() {
                     </button>
                 </form>
             </div>
+        </div>
+    );
+}
+
+// ── CoffeeOrderCard ──────────────────────────────────────────────────────────────
+
+function CoffeeOrderCard({
+    index,
+    order,
+    total,
+    onChange,
+    onRemove,
+}: {
+    index: number;
+    order: CoffeeOrder;
+    total: number;
+    onChange: (field: keyof CoffeeOrder, value: CoffeeOrder[keyof CoffeeOrder]) => void;
+    onRemove: () => void;
+}) {
+    return (
+        <div className="border border-coffee-brown/10 rounded-2xl p-5 space-y-5 bg-white/60">
+            {/* Card header */}
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest flex items-center gap-1.5">
+                    <Coffee size={13} /> 커피 {index + 1}
+                </span>
+                {total > 1 && (
+                    <button
+                        type="button"
+                        onClick={onRemove}
+                        className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
+                        title="이 커피 삭제"
+                    >
+                        <Trash2 size={15} />
+                    </button>
+                )}
+            </div>
+
+            {/* Name + Price */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <FieldLabel icon={<Coffee size={15} />} text="커피 이름" />
+                    <input
+                        type="text"
+                        placeholder="예: 아이스 아메리카노"
+                        value={order.drink}
+                        onChange={e => onChange('drink', e.target.value)}
+                        className={inputCls}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <FieldLabel icon={<span className="text-sm font-bold leading-none">₩</span>} text="가격" />
+                    <input
+                        type="number"
+                        placeholder="예: 5500"
+                        value={order.price}
+                        onChange={e => onChange('price', e.target.value === "" ? "" : Number(e.target.value))}
+                        min="0"
+                        className={inputCls}
+                    />
+                </div>
+            </div>
+
+            {/* Taste Profile */}
+            <div className="space-y-4">
+                <p className="text-sm font-bold text-coffee-brown/60">
+                    맛 프로파일 <span className="font-normal text-xs text-coffee-brown/40">(1~5점)</span>
+                </p>
+                <RangeSlider label="산미 (Acidity)" value={order.acidity} onChange={v => onChange('acidity', v)} />
+                <RangeSlider label="바디감 (Body)" value={order.body} onChange={v => onChange('body', v)} />
+                <RangeSlider label="단맛 (Sweetness)" value={order.sweetness} onChange={v => onChange('sweetness', v)} />
+            </div>
+
+            {/* Coffee Rating */}
+            <div className="space-y-3">
+                <p className="text-sm font-bold text-coffee-brown/60">커피 평점</p>
+                <StarPicker value={order.coffeeRating} onChange={v => onChange('coffeeRating', v)} activeClass="bg-coffee-accent text-coffee-brown" />
+            </div>
+
+            {/* Coffee Memo */}
+            <div className="space-y-2">
+                <p className="text-sm font-bold text-coffee-brown/60">커피 메모</p>
+                <textarea
+                    placeholder="이 커피의 향, 맛, 느낌을 적어주세요."
+                    value={order.coffeeMemo}
+                    onChange={e => onChange('coffeeMemo', e.target.value)}
+                    className="w-full h-24 px-4 py-3 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-coffee-brown/20 transition-all resize-none text-sm"
+                />
+            </div>
+
+            {/* Per-coffee price badge */}
+            {order.price !== "" && Number(order.price) > 0 && (
+                <div className="flex items-center justify-end">
+                    <span className="text-sm font-bold text-coffee-brown bg-coffee-brown/8 px-3 py-1 rounded-lg">
+                        ₩{Number(order.price).toLocaleString()}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
