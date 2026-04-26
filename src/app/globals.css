@@ -15,15 +15,97 @@
   --color-coffee-cream: var(--background);
   --color-coffee-accent: var(--accent-gold);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-playfair: var(--font-playfair);
+  --font-cormorant: var(--font-cormorant);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 .coffee-card {
   @apply bg-white rounded-xl shadow-md border border-[#EADDCA] p-6 transition-all hover:shadow-lg;
+}
+
+/* Cafe background */
+.cafe-bg {
+  background-color: #1a0f0a;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(101, 60, 30, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(80, 40, 15, 0.3) 0%, transparent 55%),
+    radial-gradient(ellipse at 60% 80%, rgba(60, 30, 10, 0.25) 0%, transparent 50%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.012) 2px,
+      rgba(255,255,255,0.012) 4px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.008) 40px,
+      rgba(255,255,255,0.008) 41px
+    );
+}
+
+/* Signboard title */
+.cafe-sign-title {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 2px 4px rgba(0,0,0,0.6),
+    0 0 40px rgba(212, 175, 55, 0.25);
+}
+
+.cafe-sign-accent {
+  color: #D4AF37;
+  text-shadow:
+    0 0 30px rgba(212, 175, 55, 0.6),
+    0 0 60px rgba(212, 175, 55, 0.25),
+    0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Gold ornamental divider */
+.gold-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #D4AF37;
+}
+
+.gold-divider::before,
+.gold-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+}
+
+/* Sign frame */
+.sign-frame {
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  box-shadow:
+    0 0 0 4px rgba(212, 175, 55, 0.08),
+    0 0 0 8px rgba(212, 175, 55, 0.04),
+    inset 0 0 60px rgba(0,0,0,0.4),
+    0 20px 60px rgba(0,0,0,0.5);
+  background: linear-gradient(
+    135deg,
+    rgba(40, 22, 10, 0.92) 0%,
+    rgba(25, 12, 5, 0.96) 50%,
+    rgba(40, 22, 10, 0.92) 100%
+  );
+}
+
+.cormorant {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+.playfair {
+  font-family: var(--font-playfair), Georgia, serif;
 }
