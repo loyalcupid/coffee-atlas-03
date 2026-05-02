@@ -90,7 +90,6 @@ img { max-width: 100%; display: block; }
     repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px),
     repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.008) 40px, rgba(255,255,255,0.008) 41px);
   min-height: 100vh;
-  display: flex;
   flex-direction: column;
   align-items: center;
 }
