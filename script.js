@@ -1,8 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getDatabase, ref, get, push, update, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAPISFgfffgdmfNQ76IxhSWCQHhqBjelwM",
   authDomain: "coffee-atlas-45fef.firebaseapp.com",
@@ -13,8 +11,9 @@ const firebaseConfig = {
   appId: "1:503089800494:web:7d98548b53bc273d9f46bf"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const rtdb = getDatabase(app);
+
 /* ================================================================
    Coffee Atlas — script.js
    Single-file SPA: router + data layer + page renderers
@@ -23,58 +22,47 @@ const app = initializeApp(firebaseConfig);
 'use strict';
 
 /* ────────────────────────────────────────────────────────────────
-   DATA LAYER  (localStorage mock — mirrors supabase.ts logic)
+   DATA LAYER  (Firebase Realtime Database)
 ──────────────────────────────────────────────────────────────── */
 
-const SEED = {
-  records: [
-    { id: 'rec-001', name: '카페 어니언', location: '성수', rating: 5, atmosphere_images: [], overall_memo: '' },
-    { id: 'rec-002', name: '프릳츠 커피', location: '마포', rating: 4, atmosphere_images: [], overall_memo: '' },
-    { id: 'rec-003', name: '테라로사', location: '강릉', rating: 4, atmosphere_images: [], overall_memo: '' },
-    { id: 'rec-004', name: '제이엠커피', location: '부산 기장군 대변3길 8', rating: 3, atmosphere_images: [], overall_memo: '' },
-  ],
-  visits: [
-    { id: 'vis-001', record_id: 'rec-001', date: '2026-02-22' },
-    { id: 'vis-002', record_id: 'rec-002', date: '2026-02-20' },
-    { id: 'vis-003', record_id: 'rec-003', date: '2026-02-15' },
-    { id: 'vis-004', record_id: 'rec-004', date: '2026-03-01' },
-  ],
-  orders: [
-    { id: 'ord-001', visit_id: 'vis-001', drink_name: '아이스 아메리카노', price: 5500, rating: 5, acidity: 3, body: 3, sweetness: 3, memo: '성수동의 힙한 분위기와 맛있는 커피' },
-    { id: 'ord-002', visit_id: 'vis-002', drink_name: '플랫 화이트', price: 6000, rating: 4, acidity: 3, body: 4, sweetness: 3, memo: '레트로한 감성과 훌륭한 블렌딩' },
-    { id: 'ord-003', visit_id: 'vis-003', drink_name: '핸드 드립', price: 7000, rating: 4, acidity: 4, body: 3, sweetness: 2, memo: '강릉 바다와 함께 즐기는 스페셜티 커피' },
-    { id: 'ord-004', visit_id: 'vis-004', drink_name: '아리차', price: 8500, rating: 3, acidity: 4, body: 2, sweetness: 3, memo: '약간의 산미, 플로럴 향' },
-  ],
-};
+function snapToArr(snap) {
+  if (!snap.exists()) return [];
+  return Object.entries(snap.val()).map(([id, val]) => ({ id, ...val }));
+}
+
+const cache = { records: [], visits: [], orders: [] };
+
+async function loadAll() {
+  const [r, v, o] = await Promise.all([
+    get(ref(rtdb, 'records')),
+    get(ref(rtdb, 'visits')),
+    get(ref(rtdb, 'orders')),
+  ]);
+  cache.records = snapToArr(r);
+  cache.visits = snapToArr(v);
+  cache.orders = snapToArr(o);
+}
 
 const db = {
-  get(table) {
-    let data = JSON.parse(localStorage.getItem(table) || '[]');
-    if (data.length === 0 && SEED[table]) {
-      data = SEED[table];
-      localStorage.setItem(table, JSON.stringify(data));
-    }
-    return data;
-  },
-  set(table, data) {
-    localStorage.setItem(table, JSON.stringify(data));
-  },
-  findAll(table) { return this.get(table); },
-  findById(table, id) { return this.get(table).find(r => r.id === id) || null; },
-  findWhere(table, field, value) { return this.get(table).filter(r => r[field] === value); },
-  insert(table, item) {
-    const newItem = { ...item, id: item.id || Math.random().toString(36).slice(2, 11) };
-    const data = this.get(table);
-    data.unshift(newItem);
-    this.set(table, data);
+  findAll(table) { return [...cache[table]]; },
+  findById(table, id) { return cache[table].find(r => r.id === id) || null; },
+  findWhere(table, field, value) { return cache[table].filter(r => r[field] === value); },
+  async insert(table, item) {
+    const newRef = push(ref(rtdb, table), item);
+    const id = newRef.key;
+    await newRef;
+    const newItem = { ...item, id };
+    cache[table].unshift(newItem);
     return newItem;
   },
-  update(table, id, changes) {
-    const data = this.get(table).map(r => r.id === id ? { ...r, ...changes } : r);
-    this.set(table, data);
+  async update(table, id, changes) {
+    await update(ref(rtdb, `${table}/${id}`), changes);
+    const idx = cache[table].findIndex(r => r.id === id);
+    if (idx > -1) Object.assign(cache[table][idx], changes);
   },
-  delete(table, id) {
-    this.set(table, this.get(table).filter(r => r.id !== id));
+  async delete(table, id) {
+    await remove(ref(rtdb, `${table}/${id}`));
+    cache[table] = cache[table].filter(r => r.id !== id);
   },
 };
 
@@ -410,17 +398,17 @@ function renderRecordDetail(recordId) {
     document.getElementById('add-visit-btn')?.addEventListener('click', async () => {
       const date = prompt('방문 날짜를 입력하세요 (YYYY-MM-DD)', new Date().toISOString().split('T')[0]);
       if (!date) return;
-      const v = db.insert('visits', { record_id: recordId, date });
+      const v = await db.insert('visits', { record_id: recordId, date });
       visits.unshift(v);
       selectedVisitId = v.id;
       draw(false);
     });
 
-    document.getElementById('add-order-btn')?.addEventListener('click', () => {
+    document.getElementById('add-order-btn')?.addEventListener('click', async () => {
       if (!selectedVisitId) { alert('먼저 방문 날짜를 선택하거나 추가해주세요.'); return; }
       const drink_name = prompt('주문한 커피 이름을 입력하세요');
       if (!drink_name) return;
-      db.insert('orders', { visit_id: selectedVisitId, drink_name, price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3, memo: '' });
+      await db.insert('orders', { visit_id: selectedVisitId, drink_name, price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3, memo: '' });
       document.getElementById('orders-chips').innerHTML = renderOrders();
     });
 
@@ -432,11 +420,11 @@ function renderRecordDetail(recordId) {
     });
 
     wrap.querySelectorAll('[data-del-visit]').forEach(btn => {
-      btn.addEventListener('click', e => {
+      btn.addEventListener('click', async e => {
         e.stopPropagation();
         if (!confirm('이 방문 기록을 삭제하시겠습니까?')) return;
         const vid = btn.dataset.delVisit;
-        db.delete('visits', vid);
+        await db.delete('visits', vid);
         const idx = visits.findIndex(v => v.id === vid);
         if (idx > -1) visits.splice(idx, 1);
         if (selectedVisitId === vid) selectedVisitId = visits[0]?.id || null;
@@ -447,20 +435,20 @@ function renderRecordDetail(recordId) {
     document.getElementById('detail-edit-btn')?.addEventListener('click', () => draw(true));
     document.getElementById('detail-cancel-btn')?.addEventListener('click', () => draw(false));
 
-    document.getElementById('detail-save-btn')?.addEventListener('click', () => {
+    document.getElementById('detail-save-btn')?.addEventListener('click', async () => {
       const name = document.getElementById('edit-name')?.value.trim();
       const location = document.getElementById('edit-location')?.value.trim();
       const rating = Number(document.getElementById('edit-rating')?.value);
       const memo = document.getElementById('edit-memo')?.value;
       if (!name) { alert('카페 이름을 입력해주세요.'); return; }
-      db.update('records', recordId, { name, location, rating, overall_memo: memo });
+      await db.update('records', recordId, { name, location, rating, overall_memo: memo });
       Object.assign(record, { name, location, rating, overall_memo: memo });
       draw(false);
     });
 
-    document.getElementById('detail-delete-btn')?.addEventListener('click', () => {
+    document.getElementById('detail-delete-btn')?.addEventListener('click', async () => {
       if (!confirm('정말로 이 기록을 삭제하시겠습니까?')) return;
-      db.delete('records', recordId);
+      await db.delete('records', recordId);
       navigate('#/records');
     });
 
@@ -478,7 +466,7 @@ function renderRecordDetail(recordId) {
       const path = `${recordId}/${Math.random().toString(36).slice(2)}`;
       const url = await imgStore.save(path, file);
       const imgs = [...(record.atmosphere_images || []), url];
-      db.update('records', recordId, { atmosphere_images: imgs });
+      await db.update('records', recordId, { atmosphere_images: imgs });
       record.atmosphere_images = imgs;
       imgInput.value = '';
       draw(false);
@@ -591,12 +579,12 @@ function renderOrderDetail(recordId, orderId) {
       });
     });
 
-    document.getElementById('od-save-btn').addEventListener('click', () => {
+    document.getElementById('od-save-btn').addEventListener('click', async () => {
       const drinkName = document.getElementById('od-name').value.trim();
       if (!drinkName) { alert('커피 이름을 입력해주세요.'); return; }
       const price = Number(document.getElementById('od-price').value) || 0;
       const memo = document.getElementById('od-memo').value;
-      db.update('orders', orderId, { drink_name: drinkName, price, rating: state.rating, acidity: state.acidity, body: state.body, sweetness: state.sweetness, memo });
+      await db.update('orders', orderId, { drink_name: drinkName, price, rating: state.rating, acidity: state.acidity, body: state.body, sweetness: state.sweetness, memo });
       navigate('#/records/' + recordId);
     });
   };
@@ -839,30 +827,37 @@ async function handleAddRecordSubmit(e) {
   btn.disabled = true;
   btn.innerHTML = '기록 중...';
 
-  const record = db.insert('records', {
-    name, location: loc,
-    rating: addRecordState.cafeRating,
-    atmosphere_images: addRecordState.images,
-    overall_memo: memo,
-  });
-
-  const visit = db.insert('visits', { record_id: record.id, date });
-
-  addRecordState.coffeeOrders.forEach(o => {
-    db.insert('orders', {
-      visit_id: visit.id,
-      drink_name: o.drink,
-      price: Number(o.price) || 0,
-      rating: o.coffeeRating,
-      acidity: o.acidity,
-      body: o.body,
-      sweetness: o.sweetness,
-      memo: o.memo,
+  try {
+    const record = await db.insert('records', {
+      name, location: loc,
+      rating: addRecordState.cafeRating,
+      atmosphere_images: addRecordState.images,
+      overall_memo: memo,
     });
-  });
 
-  btn.disabled = false;
-  navigate('#/records');
+    const visit = await db.insert('visits', { record_id: record.id, date });
+
+    await Promise.all(addRecordState.coffeeOrders.map(o =>
+      db.insert('orders', {
+        visit_id: visit.id,
+        drink_name: o.drink,
+        price: Number(o.price) || 0,
+        rating: o.coffeeRating,
+        acidity: o.acidity,
+        body: o.body,
+        sweetness: o.sweetness,
+        memo: o.memo,
+      })
+    ));
+
+    navigate('#/records');
+  } catch (err) {
+    console.error('저장 실패:', err);
+    alert('저장 중 오류가 발생했습니다.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '기록 저장하기';
+  }
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -1263,4 +1258,14 @@ function esc(str) {
    BOOT
 ──────────────────────────────────────────────────────────────── */
 
-route();
+(async () => {
+  const loading = document.getElementById('loading');
+  if (loading) loading.classList.remove('hidden');
+  try {
+    await loadAll();
+  } catch (err) {
+    console.error('Firebase 데이터 로드 실패:', err);
+  }
+  if (loading) loading.classList.add('hidden');
+  route();
+})();
