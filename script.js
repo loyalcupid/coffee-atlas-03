@@ -87,7 +87,7 @@ const imgStore = {
    ROUTER
 ──────────────────────────────────────────────────────────────── */
 
-const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map', 'login'];
+const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map', 'login', 'signup'];
 
 function showPage(id) {
   PAGES.forEach(p => {
@@ -141,6 +141,10 @@ function route() {
   } else if (p0 === 'login') {
     showPage('login');
     initLogin();
+
+  } else if (p0 === 'signup') {
+    showPage('signup');
+    initSignup();
 
   } else {
     navigate('#/');
@@ -1276,6 +1280,27 @@ function initLogin() {
 
   document.getElementById('login-google-btn').onclick = () => {
     alert('Google 로그인 기능은 준비 중입니다.');
+  };
+}
+
+function initSignup() {
+  const form = document.getElementById('signup-form');
+  if (!form) return;
+
+  form.onsubmit = e => {
+    e.preventDefault();
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirm = document.getElementById('signup-password-confirm').value;
+    if (!name || !email || !password) { alert('모든 항목을 입력해주세요.'); return; }
+    if (password.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); return; }
+    if (password !== confirm) { alert('비밀번호가 일치하지 않습니다.'); return; }
+    alert('회원가입 기능은 준비 중입니다.');
+  };
+
+  document.getElementById('signup-google-btn').onclick = () => {
+    alert('Google 회원가입 기능은 준비 중입니다.');
   };
 }
 

@@ -59,6 +59,7 @@ img { max-width: 100%; display: block; }
 .page.active { display: block; }
 #page-home.active { display: flex; }
 #page-login.active { display: flex; }
+#page-signup.active { display: flex; }
 
 /* ── Loading spinner ── */
 .spinner-wrap {
