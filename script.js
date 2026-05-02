@@ -882,11 +882,16 @@ async function handleAddRecordSubmit(e) {
   btn.innerHTML = '기록 중...';
 
   try {
+    const author = currentUser
+      ? { uid: currentUser.uid, display_name: currentUser.displayName || '', email: currentUser.email || '' }
+      : null;
+
     const record = await db.insert('records', {
       name, location: loc,
       rating: addRecordState.cafeRating,
       atmosphere_images: addRecordState.images,
       overall_memo: memo,
+      ...(author && { author }),
     });
 
     const visit = await db.insert('visits', { record_id: record.id, date });
