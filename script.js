@@ -4,20 +4,23 @@
 ================================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
 import { getDatabase, ref, push, set, get, remove, update } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAPISFgfffgdmfNQ76IxhSWCQHhqBjelwM",
-  authDomain: "coffee-atlas-45fef.firebaseapp.com",
-  databaseURL: "https://coffee-atlas-45fef-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "coffee-atlas-45fef",
-  storageBucket: "coffee-atlas-45fef.firebasestorage.app",
-  messagingSenderId: "503089800494",
-  appId: "1:503089800494:web:ca14ad05e7743f9f9f46bf"
+  apiKey: "AIzaSyACrihqYXNsg98FOc6odxrjWX9l40KQwL8",
+  authDomain: "lala-coding-backend.firebaseapp.com",
+  databaseURL: "https://lala-coding-backend-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "lala-coding-backend",
+  storageBucket: "lala-coding-backend.firebasestorage.app",
+  messagingSenderId: "918141256523",
+  appId: "1:918141256523:web:c628db3b6f906d770adece",
+  measurementId: "G-9PWDGY85J7"
 };
 
 const app      = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const database = getDatabase(app);
 const storage  = getStorage(app);
 
