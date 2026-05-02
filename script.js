@@ -87,7 +87,7 @@ const imgStore = {
    ROUTER
 ──────────────────────────────────────────────────────────────── */
 
-const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map'];
+const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map', 'login'];
 
 function showPage(id) {
   PAGES.forEach(p => {
@@ -137,6 +137,10 @@ function route() {
   } else if (p0 === 'map') {
     showPage('map');
     renderMap();
+
+  } else if (p0 === 'login') {
+    showPage('login');
+    initLogin();
 
   } else {
     navigate('#/');
@@ -1252,6 +1256,27 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ────────────────────────────────────────────────────────────────
+   LOGIN  PAGE
+──────────────────────────────────────────────────────────────── */
+
+function initLogin() {
+  const form = document.getElementById('login-form');
+  if (!form) return;
+
+  form.onsubmit = e => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
+    alert('로그인 기능은 준비 중입니다.');
+  };
+
+  document.getElementById('login-google-btn').onclick = () => {
+    alert('Google 로그인 기능은 준비 중입니다.');
+  };
 }
 
 /* ────────────────────────────────────────────────────────────────
