@@ -133,7 +133,7 @@ const imgStore = {
    ROUTER
 ──────────────────────────────────────────────────────────────── */
 
-const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map', 'login', 'signup'];
+const PAGES = ['home', 'records', 'record-detail', 'order-detail', 'add-record', 'dashboard', 'map', 'login', 'signup', 'reputation'];
 
 function showPage(id) {
   PAGES.forEach(p => {
@@ -183,6 +183,10 @@ function route() {
   } else if (p0 === 'map') {
     showPage('map');
     renderMap();
+
+  } else if (p0 === 'reputation') {
+    showPage('reputation');
+    renderReputation();
 
   } else if (p0 === 'login') {
     showPage('login');
@@ -1311,6 +1315,182 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ────────────────────────────────────────────────────────────────
+   REPUTATION  PAGE
+──────────────────────────────────────────────────────────────── */
+
+function renderReputation() {
+  const searchInput = document.getElementById('rep-search');
+  const listEl      = document.getElementById('rep-list');
+  const statsEl     = document.getElementById('rep-stats');
+  const subtitleEl  = document.getElementById('rep-subtitle');
+  const sortRow     = document.getElementById('rep-sort-row');
+
+  const allRecords = db.findAll('records');
+  const allVisits  = db.findAll('visits');
+  const allOrders  = db.findAll('orders');
+
+  /* build visit / order lookup maps */
+  const visitsByRecord = {};
+  allVisits.forEach(v => { (visitsByRecord[v.record_id] ??= []).push(v); });
+  const ordersByVisit = {};
+  allOrders.forEach(o => { (ordersByVisit[o.visit_id] ??= []).push(o); });
+
+  /* aggregate by cafe name + location */
+  const cafeMap = {};
+  allRecords.forEach(r => {
+    const key = `${r.name?.trim()}||${(r.location || '').trim()}`;
+    if (!cafeMap[key]) cafeMap[key] = { name: r.name?.trim(), location: (r.location || '').trim(), records: [], visits: [], orders: [] };
+    cafeMap[key].records.push(r);
+    const rv = visitsByRecord[r.id] || [];
+    cafeMap[key].visits.push(...rv);
+    rv.forEach(v => cafeMap[key].orders.push(...(ordersByVisit[v.id] || [])));
+  });
+
+  const cafeSummaries = Object.values(cafeMap).map(c => {
+    const cafeRatings = c.records.map(r => r.rating).filter(Boolean);
+    const avgCafeRating = cafeRatings.length
+      ? +(cafeRatings.reduce((s, v) => s + v, 0) / cafeRatings.length).toFixed(1) : 0;
+
+    const drinkCnt = {};
+    c.orders.forEach(o => { if (o.drink_name) drinkCnt[o.drink_name] = (drinkCnt[o.drink_name] || 0) + 1; });
+    const topDrinks = Object.entries(drinkCnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
+
+    const tasteSrc = c.orders.filter(o => o.acidity);
+    const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,   0) / tasteSrc.length).toFixed(1) : 0;
+    const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,      0) / tasteSrc.length).toFixed(1) : 0;
+    const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness, 0) / tasteSrc.length).toFixed(1) : 0;
+
+    const reviewers = [...new Set(c.records.filter(r => r.author?.display_name).map(r => r.author.display_name))];
+
+    return { name: c.name, location: c.location, avgCafeRating, visitCount: c.visits.length,
+             recordCount: c.records.length, topDrinks, avgAcidity, avgBody, avgSweetness, reviewers };
+  }).filter(c => c.name);
+
+  /* global stats */
+  const orderRatings = allOrders.filter(o => o.rating).map(o => o.rating);
+  const globalAvg = orderRatings.length
+    ? +(orderRatings.reduce((s, v) => s + v, 0) / orderRatings.length).toFixed(1) : 0;
+
+  if (subtitleEl) subtitleEl.textContent = `Coffee Atlas 유저들이 기록한 ${cafeSummaries.length}곳의 카페 정보`;
+
+  if (statsEl) statsEl.innerHTML = [
+    { icon: SVG.coffee,   label: '등록된 카페',   value: cafeSummaries.length, unit: '곳' },
+    { icon: SVG.calendar, label: '총 방문 기록',   value: allVisits.length,     unit: '회' },
+    { icon: SVG.star,     label: '평균 커피 평점', value: globalAvg || '-',     unit: globalAvg ? '점' : '' },
+  ].map(s => `
+    <div class="rep-stat-chip">
+      <div class="rep-stat-icon">${s.icon}</div>
+      <div>
+        <p class="rep-stat-value">${s.value}<span class="rep-stat-unit">${s.unit}</span></p>
+        <p class="rep-stat-label">${s.label}</p>
+      </div>
+    </div>`).join('');
+
+  let currentSort = 'rating';
+
+  const draw = () => {
+    const term = searchInput.value.toLowerCase();
+    let cafes = [...cafeSummaries];
+
+    if (term) cafes = cafes.filter(c =>
+      c.name.toLowerCase().includes(term) || c.location.toLowerCase().includes(term));
+
+    if (currentSort === 'rating') {
+      cafes.sort((a, b) => b.avgCafeRating - a.avgCafeRating || b.visitCount - a.visitCount);
+    } else {
+      cafes.sort((a, b) => b.visitCount - a.visitCount || b.avgCafeRating - a.avgCafeRating);
+    }
+
+    if (cafes.length === 0) {
+      listEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">${SVG.coffee}</div>
+          <p class="empty-state-text">${term ? `"${esc(term)}" 검색 결과가 없습니다.` : '아직 등록된 카페가 없습니다.'}</p>
+          ${!term ? `<a href="#/add-record" class="empty-state-a">첫 카페 기록하기 →</a>` : ''}
+        </div>`;
+      return;
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+    const tasteItems = [
+      { label: '산미', key: 'avgAcidity',   color: '#7EC8E3' },
+      { label: '바디', key: 'avgBody',      color: '#C8A97E' },
+      { label: '단맛', key: 'avgSweetness', color: '#D4AF37' },
+    ];
+
+    listEl.innerHTML = cafes.map((c, i) => {
+      const rank  = i + 1;
+      const medal = rank <= 3 ? medals[rank - 1] : null;
+      const stars = [1,2,3,4,5].map(n =>
+        `<span style="color:${c.avgCafeRating >= n ? '#D4AF37' : 'rgba(61,43,31,0.15)'}">${SVG.star}</span>`
+      ).join('');
+
+      const tasteBars = c.avgAcidity > 0 ? `
+        <div class="rep-taste-row">
+          ${tasteItems.map(t => `
+            <div class="rep-taste-item">
+              <span class="rep-taste-label">${t.label}</span>
+              <div class="rep-taste-track">
+                <div class="rep-taste-fill" style="width:${(c[t.key]/5)*100}%;background:${t.color};"></div>
+              </div>
+              <span class="rep-taste-val">${c[t.key]}</span>
+            </div>`).join('')}
+        </div>` : '';
+
+      return `
+        <div class="rep-card${rank <= 3 ? ' rep-card-top rep-card-top-' + rank : ''}">
+          <div class="rep-card-rank">
+            ${medal
+              ? `<span class="rep-medal">${medal}</span>`
+              : `<span class="rep-rank-num">#${rank}</span>`}
+          </div>
+          <div class="rep-card-body">
+            <div class="rep-card-header">
+              <div class="rep-card-title-wrap">
+                <h3 class="rep-card-name">${esc(c.name)}</h3>
+                <div class="rep-card-meta">
+                  ${c.location ? `<span class="rep-card-loc">${SVG.mapPin} ${esc(c.location)}</span>` : ''}
+                  <span class="rep-card-visits">${SVG.calendar} 방문 ${c.visitCount}회</span>
+                  ${c.reviewers.length ? `<span class="rep-card-badge">리뷰 ${c.reviewers.length}명</span>` : ''}
+                </div>
+              </div>
+              <div class="rep-card-rating-wrap">
+                <div class="rep-stars">${stars}</div>
+                <span class="rep-rating-num">${c.avgCafeRating > 0 ? c.avgCafeRating : '-'}</span>
+              </div>
+            </div>
+            ${c.topDrinks.length ? `
+              <div class="rep-drinks">
+                <span class="rep-drinks-icon">${SVG.coffee}</span>
+                <span class="rep-drinks-label">인기 메뉴</span>
+                <div class="rep-drink-chips">
+                  ${c.topDrinks.map(d => `<span class="rep-drink-chip">${esc(d)}</span>`).join('')}
+                </div>
+              </div>` : ''}
+            ${tasteBars}
+            ${c.reviewers.length ? `
+              <div class="rep-reviewers">
+                <span class="rep-reviewers-label">기록자</span>
+                <span class="rep-reviewers-names">${c.reviewers.map(r => esc(r)).join(' · ')}</span>
+              </div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  };
+
+  draw();
+  if (searchInput) searchInput.oninput = draw;
+
+  if (sortRow) sortRow.querySelectorAll('.rep-sort-btn').forEach(btn => {
+    btn.onclick = () => {
+      currentSort = btn.dataset.sort;
+      sortRow.querySelectorAll('.rep-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      draw();
+    };
+  });
 }
 
 /* ────────────────────────────────────────────────────────────────

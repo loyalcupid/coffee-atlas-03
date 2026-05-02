@@ -79,13 +79,13 @@
             <h3 class="feature-title playfair">나의 카페 지도</h3>
             <p class="feature-desc cormorant">내가 다녀온 카페들을<br>지도에서 한눈에 확인하세요.</p>
           </a>
-          <div class="feature-item">
+          <a href="#/reputation" class="feature-item">
             <div class="feature-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
             <h3 class="feature-title playfair">전국 카페 평판</h3>
             <p class="feature-desc cormorant">전국 카페들의 실제 방문<br>후기와 평점을 확인하세요.</p>
-          </div>
+          </a>
           <div class="feature-item">
             <div class="feature-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -209,6 +209,45 @@
     </div>
 
   </div><!-- /page-signup -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: REPUTATION
+  ══════════════════════════════════════════════ -->
+  <div id="page-reputation" class="page">
+    <div class="page-wrap">
+      <div class="page-inner-lg">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <button class="icon-btn" data-nav="#/">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            <div>
+              <h1>전국 카페 평판</h1>
+              <p id="rep-subtitle" class="rep-subtitle"></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="rep-stats" class="rep-stats-row"></div>
+
+        <div class="rep-controls">
+          <div class="search-bar-wrap" style="flex:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="form-input" id="rep-search" type="text" placeholder="카페 이름이나 위치로 검색...">
+          </div>
+          <div id="rep-sort-row" class="rep-sort-row">
+            <button class="rep-sort-btn active" data-sort="rating">평점순</button>
+            <button class="rep-sort-btn" data-sort="visits">방문순</button>
+          </div>
+        </div>
+
+        <div id="rep-list"></div>
+
+      </div>
+    </div>
+  </div><!-- /page-reputation -->
 
 
   <!-- ══════════════════════════════════════════════
