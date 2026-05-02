@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coffee Atlas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       LOADING
+  ══════════════════════════════════════════════ -->
+  <div id="loading" class="spinner-wrap hidden">
+    <div class="spinner"></div>
+    <p style="font-size:14px;color:var(--brown-50)">불러오는 중...</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: HOME
+  ══════════════════════════════════════════════ -->
+  <div id="page-home" class="page cafe-bg">
+
+    <section class="hero-section">
+      <p class="hero-label cormorant">Est. 2026 &nbsp;·&nbsp; Seoul, Korea</p>
+
+      <div class="sign-frame">
+        <div class="gold-divider cormorant">✦ The Original ✦</div>
+        <div>
+          <p class="hero-pretitle cormorant">당신의 커피 취향을 기록하다</p>
+          <h1 class="hero-title playfair">Coffee</h1>
+          <h1 class="hero-title gold playfair">Atlas</h1>
+        </div>
+        <div class="gold-divider cormorant">✦ Since 2026 ✦</div>
+        <p class="hero-subtitle cormorant">
+          어떤 카페가 좋았나요? 그날의 향기와 맛을 기록하고,<br>
+          당신만의 특별한 커피 취향을 지도로 만들어보세요.
+        </p>
+        <div class="cta-group">
+          <a href="#/add-record" class="btn-primary playfair">카페 방문 기록 남기기</a>
+          <a href="#/dashboard" class="btn-outline-gold playfair">나의 커피 취향 분석</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="story-banner">
+      <a href="#/records" class="story-banner-inner">
+        <div style="display:flex;align-items:center;gap:24px;">
+          <div class="story-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M15 8h-5"/><path d="M15 12h-5"/></svg>
+          </div>
+          <div class="story-banner-text">
+            <p class="story-banner-label cormorant">My Collection</p>
+            <h2 class="story-banner-title playfair">나의 카페 스토리</h2>
+            <p class="story-banner-desc cormorant">내가 기록한 모든 카페 방문 이야기를 한곳에서 만나보세요.</p>
+          </div>
+        </div>
+        <div class="story-banner-arrow cormorant">
+          <span class="hide-sm">둘러보기</span>
+          <span>→</span>
+        </div>
+      </a>
+    </div>
+
+    <section class="features-section">
+      <div class="features-inner">
+        <div class="gold-divider cormorant">Our Features</div>
+        <div class="features-grid">
+          <a href="#/map" class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+            </div>
+            <h3 class="feature-title playfair">나의 카페 지도</h3>
+            <p class="feature-desc cormorant">내가 다녀온 카페들을<br>지도에서 한눈에 확인하세요.</p>
+          </a>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h3 class="feature-title playfair">전국 카페 평판</h3>
+            <p class="feature-desc cormorant">전국 카페들의 실제 방문<br>후기와 평점을 확인하세요.</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="feature-title playfair">커피 고수 탐방</h3>
+            <p class="feature-desc cormorant">전문가들의 추천 카페와<br>브루잉 노하우를 만나보세요.</p>
+          </div>
+          <div class="feature-item">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h3 class="feature-title playfair">커피 백과사전</h3>
+            <p class="feature-desc cormorant">원두 품종부터 추출 방식까지<br>모든 지식을 탐색하세요.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="home-footer">
+      <p class="cormorant">© 2026 Coffee Atlas &nbsp;·&nbsp; All rights reserved</p>
+    </footer>
+
+  </div><!-- /page-home -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: RECORDS LIST
+  ══════════════════════════════════════════════ -->
+  <div id="page-records" class="page">
+    <div class="page-wrap">
+      <div class="page-inner-lg">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <button class="icon-btn" data-nav="#/">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            <h1>나의 기록들</h1>
+          </div>
+          <a href="#/add-record" class="btn-add-record">새 기록 추가</a>
+        </div>
+
+        <div class="search-row">
+          <div class="search-bar-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input class="form-input" id="records-search" type="text" placeholder="카페 이름이나 위치로 검색...">
+          </div>
+          <button class="btn-filter" id="records-filter-clear" title="필터 초기화">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          </button>
+        </div>
+
+        <div id="records-list"></div>
+
+      </div>
+    </div>
+  </div><!-- /page-records -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: RECORD DETAIL
+  ══════════════════════════════════════════════ -->
+  <div id="page-record-detail" class="page">
+    <div class="page-wrap">
+      <div class="page-inner">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <button class="icon-btn" data-nav="#/records">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            </button>
+            <h1>상세 기록</h1>
+          </div>
+          <button class="icon-btn" data-nav="#/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </button>
+        </div>
+
+        <div id="record-detail-content"></div>
+
+      </div>
+    </div>
+  </div><!-- /page-record-detail -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: ORDER DETAIL
+  ══════════════════════════════════════════════ -->
+  <div id="page-order-detail" class="page">
+    <div class="page-wrap">
+      <div class="page-inner">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <button class="icon-btn" id="order-back-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            </button>
+            <h1>커피 상세 기록</h1>
+          </div>
+          <button class="icon-btn" data-nav="#/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </button>
+        </div>
+
+        <div id="order-detail-content"></div>
+
+      </div>
+    </div>
+  </div><!-- /page-order-detail -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: ADD RECORD
+  ══════════════════════════════════════════════ -->
+  <div id="page-add-record" class="page">
+    <div class="page-wrap">
+      <div class="page-inner">
+
+        <div class="page-header">
+          <div class="page-header-left">
+            <button class="icon-btn" data-nav="#/">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            <h1>커피 기록하기</h1>
+          </div>
+          <button class="icon-btn" data-nav="#/records" style="font-size:14px;color:var(--brown-50);width:auto;padding:4px 8px;border-radius:8px;">취소</button>
+        </div>
+
+        <form id="add-record-form">
+
+          <!-- 카페 정보 -->
+          <div class="form-section section-gap">
+            <div class="form-section-title">카페 정보</div>
+            <div class="form-grid-2">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <label class="field-label" for="add-cafe-name">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>
+                    카페 이름
+                  </label>
+                  <button type="button" id="map-search-btn" style="font-size:12px;color:#3b82f6;display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    지도 검색
+                  </button>
+                </div>
+                <input class="form-input" id="add-cafe-name" type="text" placeholder="카페 이름을 입력하세요" required>
+              </div>
+              <div>
+                <label class="field-label" for="add-location">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  위치
+                </label>
+                <input class="form-input" id="add-location" type="text" placeholder="예: 서울 마포구 연남동">
+              </div>
+              <div>
+                <label class="field-label" for="add-date">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  방문 날짜
+                </label>
+                <input class="form-input" id="add-date" type="date" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- 주문한 커피 -->
+          <div class="form-section section-gap">
+            <div class="form-section-title">주문한 커피</div>
+            <div id="coffee-orders-container"></div>
+            <button type="button" class="btn-add-coffee" id="add-coffee-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              커피 추가하기
+            </button>
+            <div id="total-price-display" class="price-total hidden">
+              <span class="price-total-label">커피구매 총액</span>
+              <span class="price-total-value" id="total-price-value">₩0</span>
+            </div>
+          </div>
+
+          <!-- 카페 분위기 -->
+          <div class="form-section section-gap">
+            <div class="form-section-title">카페 분위기</div>
+            <div class="img-grid" id="atmosphere-grid"></div>
+            <p style="font-size:12px;color:var(--brown-30);margin-top:4px;">최대 10장 · 카페 분위기 사진을 추가하세요</p>
+            <input type="file" accept="image/*" id="img-file-input" style="display:none;">
+          </div>
+
+          <!-- 총평 -->
+          <div class="form-section section-gap">
+            <div class="form-section-title">총평</div>
+            <div style="margin-bottom:20px;">
+              <p class="field-label" style="margin-bottom:12px;">총평점 <span style="font-weight:400;font-size:12px;color:var(--brown-30)">(카페 전체)</span></p>
+              <div class="star-picker" id="cafe-rating-picker"></div>
+            </div>
+            <div>
+              <p class="field-label" style="margin-bottom:8px;">총평글</p>
+              <textarea class="form-textarea" id="add-overall-memo" placeholder="이 카페에 대한 전반적인 인상이나 추천 여부를 남겨주세요."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="add-record-submit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            기록 완료하기
+          </button>
+
+        </form>
+      </div>
+    </div>
+  </div><!-- /page-add-record -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: DASHBOARD
+  ══════════════════════════════════════════════ -->
+  <div id="page-dashboard" class="page">
+
+    <div class="dashboard-hero">
+      <div class="dashboard-hero-inner">
+        <div class="dashboard-top-bar">
+          <button class="icon-btn" data-nav="#/" style="color:white;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </button>
+          <a href="#/add-record" class="btn-add-gold">+ 기록 추가</a>
+        </div>
+        <div class="dashboard-meta">
+          <p class="dashboard-eyebrow">My Coffee Atlas</p>
+          <h1 class="dashboard-title">나의 커피 취향 분석</h1>
+          <p class="dashboard-subtitle" id="dash-subtitle">총 0개 카페 · 0번의 방문 기록</p>
+        </div>
+        <div class="stats-grid" id="dash-stats"></div>
+      </div>
+    </div>
+
+    <div class="dashboard-body" id="dash-body"></div>
+
+  </div><!-- /page-dashboard -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PAGE: MAP
+  ══════════════════════════════════════════════ -->
+  <div id="page-map" class="page">
+
+    <header class="map-header">
+      <div class="map-header-left">
+        <button class="icon-btn" data-nav="#/">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </button>
+        <div>
+          <h1 class="map-header-title">나의 카페 지도</h1>
+          <p class="map-header-sub">방문한 카페를 네이버 지도에서 찾아보세요</p>
+        </div>
+      </div>
+      <a href="#/add-record" class="btn-add-record hide-sm">기록 추가</a>
+    </header>
+
+    <div class="page-wrap" style="padding-top:24px;">
+      <div class="page-inner-lg">
+        <div class="search-bar-wrap section-gap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="form-input" id="map-search" type="text" placeholder="카페 이름이나 위치로 검색...">
+        </div>
+        <div id="map-list"></div>
+      </div>
+    </div>
+
+    <footer style="padding:32px;text-align:center;font-family:var(--font-cormorant);color:var(--brown-50);font-size:14px;border-top:1px solid var(--brown-5);">
+      리스트를 클릭하면 네이버 지도로 연결됩니다.
+    </footer>
+
+  </div><!-- /page-map -->
+
+
+  <script src="script.js"></script>
+</body>
+</html>
