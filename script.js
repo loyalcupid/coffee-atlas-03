@@ -3,6 +3,20 @@
    Single-file SPA: router + data layer + page renderers
 ================================================================ */
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAPISFgfffgdmfNQ76IxhSWCQHhqBjelwM",
+  authDomain: "coffee-atlas-45fef.firebaseapp.com",
+  databaseURL: "https://coffee-atlas-45fef-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "coffee-atlas-45fef",
+  storageBucket: "coffee-atlas-45fef.firebasestorage.app",
+  messagingSenderId: "503089800494",
+  appId: "1:503089800494:web:ca14ad05e7743f9f9f46bf"
+};
+
+const app = initializeApp(firebaseConfig);
+
 'use strict';
 
 /* ────────────────────────────────────────────────────────────────
