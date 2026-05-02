@@ -74,10 +74,13 @@ const db = {
 ──────────────────────────────────────────────────────────────── */
 
 let currentUser = null;
+let _resolveAuth;
+const authReady = new Promise(res => { _resolveAuth = res; });
 
 onAuthStateChanged(auth, user => {
   currentUser = user;
   updateAuthUI();
+  if (_resolveAuth) { _resolveAuth(); _resolveAuth = null; }
 });
 
 function updateAuthUI() {
@@ -129,6 +132,22 @@ const imgStore = {
   },
 };
 
+/* 로그인한 유저 소유 데이터만 반환 */
+function userRecords() {
+  if (!currentUser) return [];
+  return cache.records.filter(r => r.author?.uid === currentUser.uid);
+}
+function userVisits() {
+  if (!currentUser) return [];
+  const ids = new Set(userRecords().map(r => r.id));
+  return cache.visits.filter(v => ids.has(v.record_id));
+}
+function userOrders() {
+  if (!currentUser) return [];
+  const ids = new Set(userVisits().map(v => v.id));
+  return cache.orders.filter(o => ids.has(o.visit_id));
+}
+
 /* ────────────────────────────────────────────────────────────────
    ROUTER
 ──────────────────────────────────────────────────────────────── */
@@ -157,32 +176,32 @@ function route() {
   const parts = parseHash(location.hash);
   const [p0, p1, , p3] = parts;
 
+  /* 로그인 필요 경로: 미인증 시 로그인 페이지로 */
+  const guard = (page, fn) => {
+    if (!currentUser) { showPage('login'); initLogin(); return; }
+    showPage(page); fn();
+  };
+
   if (!p0 || p0 === '') {
     showPage('home');
 
   } else if (p0 === 'records' && !p1) {
-    showPage('records');
-    renderRecords();
+    guard('records', () => renderRecords());
 
   } else if (p0 === 'records' && p1 && !p3) {
-    showPage('record-detail');
-    renderRecordDetail(p1);
+    guard('record-detail', () => renderRecordDetail(p1));
 
   } else if (p0 === 'records' && p1 && p3) {
-    showPage('order-detail');
-    renderOrderDetail(p1, p3);
+    guard('order-detail', () => renderOrderDetail(p1, p3));
 
   } else if (p0 === 'add-record') {
-    showPage('add-record');
-    initAddRecord();
+    guard('add-record', () => initAddRecord());
 
   } else if (p0 === 'dashboard') {
-    showPage('dashboard');
-    renderDashboard();
+    guard('dashboard', () => renderDashboard());
 
   } else if (p0 === 'map') {
-    showPage('map');
-    renderMap();
+    guard('map', () => renderMap());
 
   } else if (p0 === 'reputation') {
     showPage('reputation');
@@ -243,9 +262,9 @@ function renderRecords() {
 
   const draw = () => {
     const term = search.value.toLowerCase();
-    const records = db.findAll('records');
-    const visits = db.findAll('visits');
-    const orders = db.findAll('orders');
+    const records = userRecords();
+    const visits = userVisits();
+    const orders = userOrders();
 
     const summaries = records.map(r => {
       const rv = visits.filter(v => v.record_id === r.id).sort((a, b) => b.date > a.date ? 1 : -1);
@@ -303,6 +322,9 @@ function renderRecordDetail(recordId) {
   const wrap = document.getElementById('record-detail-content');
   const record = db.findById('records', recordId);
   if (!record) { wrap.innerHTML = '<p style="color:var(--brown-50);padding:40px;text-align:center;">기록을 찾을 수 없습니다.</p>'; return; }
+  if (record.author?.uid && record.author.uid !== currentUser?.uid) {
+    wrap.innerHTML = '<p style="color:var(--brown-50);padding:40px;text-align:center;">접근 권한이 없습니다.</p>'; return;
+  }
 
   const visits = db.findWhere('visits', 'record_id', recordId)
     .sort((a, b) => b.date > a.date ? 1 : -1);
@@ -542,6 +564,10 @@ function renderOrderDetail(recordId, orderId) {
   const wrap = document.getElementById('order-detail-content');
   const order = db.findById('orders', orderId);
   if (!order) { wrap.innerHTML = '<p style="color:var(--brown-50);padding:40px;text-align:center;">주문 정보를 찾을 수 없습니다.</p>'; return; }
+  const parentRecord = db.findById('records', recordId);
+  if (parentRecord?.author?.uid && parentRecord.author.uid !== currentUser?.uid) {
+    wrap.innerHTML = '<p style="color:var(--brown-50);padding:40px;text-align:center;">접근 권한이 없습니다.</p>'; return;
+  }
 
   document.getElementById('order-back-btn').onclick = () => navigate('#/records/' + recordId);
 
@@ -928,9 +954,9 @@ async function handleAddRecordSubmit(e) {
 ──────────────────────────────────────────────────────────────── */
 
 function renderDashboard() {
-  const records = db.findAll('records');
-  const visits = db.findAll('visits');
-  const orders = db.findAll('orders');
+  const records = userRecords();
+  const visits = userVisits();
+  const orders = userOrders();
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1243,9 +1269,9 @@ function renderMap() {
 
   const draw = () => {
     const term = searchInput.value.toLowerCase();
-    const records = db.findAll('records');
-    const visits = db.findAll('visits');
-    const orders = db.findAll('orders');
+    const records = userRecords();
+    const visits = userVisits();
+    const orders = userOrders();
 
     const items = records.map(r => {
       const rv = visits.filter(v => v.record_id === r.id).sort((a, b) => b.date > a.date ? 1 : -1);
@@ -1590,7 +1616,7 @@ function initSignup() {
   const loading = document.getElementById('loading');
   if (loading) loading.classList.remove('hidden');
   try {
-    await loadAll();
+    await Promise.all([loadAll(), authReady]);
   } catch (err) {
     console.error('Firebase 데이터 로드 실패:', err);
   }
