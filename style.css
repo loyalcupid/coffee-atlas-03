@@ -1613,6 +1613,48 @@ input[type="range"]::-webkit-slider-thumb {
   transition: color 0.2s;
 }
 .login-signup-link:hover { color: var(--gold); }
+
+.login-error {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.35);
+  color: #fca5a5;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.home-nav-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.home-nav-username {
+  font-family: var(--font-cormorant);
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(252,245,229,0.75);
+  letter-spacing: 0.05em;
+}
+.btn-nav-logout {
+  font-family: var(--font-cormorant);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(212,175,55,0.7);
+  border: 1px solid rgba(212,175,55,0.3);
+  background: transparent;
+  padding: 7px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-nav-logout:hover {
+  background: rgba(212,175,55,0.1);
+  color: var(--gold);
+}
 .stack { display: flex; flex-direction: column; gap: 16px; }
 .stack-sm { display: flex; flex-direction: column; gap: 8px; }
 .row { display: flex; align-items: center; }

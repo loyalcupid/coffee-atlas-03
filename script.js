@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getDatabase, ref, get, push, update, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAPISFgfffgdmfNQ76IxhSWCQHhqBjelwM",
@@ -13,6 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const rtdb = getDatabase(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 /* ================================================================
    Coffee Atlas — script.js
@@ -65,6 +68,49 @@ const db = {
     cache[table] = cache[table].filter(r => r.id !== id);
   },
 };
+
+/* ────────────────────────────────────────────────────────────────
+   AUTH
+──────────────────────────────────────────────────────────────── */
+
+let currentUser = null;
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  updateAuthUI();
+});
+
+function updateAuthUI() {
+  const container = document.getElementById('home-nav-auth');
+  if (!container) return;
+  if (currentUser) {
+    const name = currentUser.displayName || currentUser.email?.split('@')[0] || '사용자';
+    container.innerHTML = `
+      <div class="home-nav-user">
+        <span class="home-nav-username cormorant">${esc(name)}님</span>
+        <button class="btn-nav-logout cormorant" id="home-logout-btn">로그아웃</button>
+      </div>`;
+    document.getElementById('home-logout-btn').onclick = () => signOut(auth);
+  } else {
+    container.innerHTML = `<a href="#/login" class="btn-login cormorant">로그인</a>`;
+  }
+}
+
+function getAuthErrorMsg(code) {
+  const map = {
+    'auth/invalid-credential':    '이메일 또는 비밀번호가 올바르지 않습니다.',
+    'auth/user-not-found':        '등록되지 않은 이메일입니다.',
+    'auth/wrong-password':        '비밀번호가 올바르지 않습니다.',
+    'auth/email-already-in-use':  '이미 사용 중인 이메일입니다.',
+    'auth/weak-password':         '비밀번호는 6자 이상이어야 합니다.',
+    'auth/invalid-email':         '유효하지 않은 이메일 형식입니다.',
+    'auth/too-many-requests':     '잠시 후 다시 시도해주세요.',
+    'auth/network-request-failed':'네트워크 오류가 발생했습니다.',
+    'auth/popup-closed-by-user':  null,
+    'auth/cancelled-popup-request': null,
+  };
+  return map[code] !== undefined ? map[code] : '오류가 발생했습니다. 다시 시도해주세요.';
+}
 
 /* image storage via localStorage (base64) */
 const imgStore = {
@@ -1269,38 +1315,85 @@ function esc(str) {
 function initLogin() {
   const form = document.getElementById('login-form');
   if (!form) return;
+  const errorEl = document.getElementById('login-error');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
-  form.onsubmit = e => {
+  const showErr = msg => { if (errorEl && msg) { errorEl.textContent = msg; errorEl.style.display = 'block'; } };
+  const clearErr = () => { if (errorEl) errorEl.style.display = 'none'; };
+  clearErr();
+
+  form.onsubmit = async e => {
     e.preventDefault();
+    clearErr();
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
-    if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요.'); return; }
-    alert('로그인 기능은 준비 중입니다.');
+    if (!email || !password) { showErr('이메일과 비밀번호를 입력해주세요.'); return; }
+    submitBtn.disabled = true;
+    submitBtn.textContent = '로그인 중...';
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('#/');
+    } catch (err) {
+      showErr(getAuthErrorMsg(err.code));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '로그인';
+    }
   };
 
-  document.getElementById('login-google-btn').onclick = () => {
-    alert('Google 로그인 기능은 준비 중입니다.');
+  document.getElementById('login-google-btn').onclick = async () => {
+    clearErr();
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate('#/');
+    } catch (err) {
+      showErr(getAuthErrorMsg(err.code));
+    }
   };
 }
 
 function initSignup() {
   const form = document.getElementById('signup-form');
   if (!form) return;
+  const errorEl = document.getElementById('signup-error');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
-  form.onsubmit = e => {
+  const showErr = msg => { if (errorEl && msg) { errorEl.textContent = msg; errorEl.style.display = 'block'; } };
+  const clearErr = () => { if (errorEl) errorEl.style.display = 'none'; };
+  clearErr();
+
+  form.onsubmit = async e => {
     e.preventDefault();
+    clearErr();
     const name = document.getElementById('signup-name').value.trim();
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
     const confirm = document.getElementById('signup-password-confirm').value;
-    if (!name || !email || !password) { alert('모든 항목을 입력해주세요.'); return; }
-    if (password.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); return; }
-    if (password !== confirm) { alert('비밀번호가 일치하지 않습니다.'); return; }
-    alert('회원가입 기능은 준비 중입니다.');
+    if (!name || !email || !password) { showErr('모든 항목을 입력해주세요.'); return; }
+    if (password.length < 6) { showErr('비밀번호는 6자 이상이어야 합니다.'); return; }
+    if (password !== confirm) { showErr('비밀번호가 일치하지 않습니다.'); return; }
+    submitBtn.disabled = true;
+    submitBtn.textContent = '가입 중...';
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: name });
+      navigate('#/');
+    } catch (err) {
+      showErr(getAuthErrorMsg(err.code));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '회원가입';
+    }
   };
 
-  document.getElementById('signup-google-btn').onclick = () => {
-    alert('Google 회원가입 기능은 준비 중입니다.');
+  document.getElementById('signup-google-btn').onclick = async () => {
+    clearErr();
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate('#/');
+    } catch (err) {
+      showErr(getAuthErrorMsg(err.code));
+    }
   };
 }
 
