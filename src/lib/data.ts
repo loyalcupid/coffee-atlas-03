@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { db, snapToArray } from './firebase';
+import { ref, get } from 'firebase/database';
 
 export interface RecordSummary {
   id: string;
@@ -11,39 +12,32 @@ export interface RecordSummary {
 }
 
 export async function fetchRecordsWithDetails(): Promise<RecordSummary[]> {
-  const { data: recordsData, error } = await supabase.from('records').select('*').execute();
-  if (error || !recordsData) return [];
+  const [recSnap, visSnap, ordSnap] = await Promise.all([
+    get(ref(db, 'records')),
+    get(ref(db, 'visits')),
+    get(ref(db, 'orders')),
+  ]);
 
-  const results = await Promise.all(
-    recordsData.map(async (record: any) => {
-      const { data: visitData } = await supabase
-        .from('visits')
-        .select('*')
-        .eq('record_id', record.id)
-        .order('date', { ascending: false })
-        .execute();
+  const records = snapToArray<any>(recSnap);
+  const allVisits = snapToArray<any>(visSnap);
+  const allOrders = snapToArray<any>(ordSnap);
 
-      const latestVisit = visitData?.[0];
-      let latestDrink = '';
+  return records.map(record => {
+    const visits = allVisits
+      .filter(v => v.record_id === record.id)
+      .sort((a, b) => b.date.localeCompare(a.date));
 
-      if (latestVisit) {
-        const { data: orderData } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('visit_id', latestVisit.id)
-          .execute();
-        latestDrink = orderData?.[0]?.drink_name || '';
-      }
+    const latestVisit = visits[0];
+    const latestOrder = latestVisit
+      ? allOrders.find(o => o.visit_id === latestVisit.id)
+      : null;
 
-      return {
-        ...record,
-        date: latestVisit?.date || '',
-        drink: latestDrink,
-      } as RecordSummary;
-    })
-  );
-
-  return results.sort((a, b) => {
+    return {
+      ...record,
+      date: latestVisit?.date || '',
+      drink: latestOrder?.drink_name || '',
+    } as RecordSummary;
+  }).sort((a, b) => {
     if (!a.date) return 1;
     if (!b.date) return -1;
     return b.date.localeCompare(a.date);

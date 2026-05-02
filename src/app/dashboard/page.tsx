@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, Droplets, Layers, Candy } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { db, snapToArray } from "@/lib/firebase";
+import { ref, get } from "firebase/database";
 
 /* ─────────────────────────── types ─────────────────────────── */
 interface CafeRecord { id: string; name: string; location: string; rating: number; }
@@ -107,14 +108,14 @@ export default function Dashboard() {
 
     useEffect(() => {
         const load = async () => {
-            const [recRes, visRes, ordRes] = await Promise.all([
-                supabase.from("records").select("*").execute(),
-                supabase.from("visits").select("*").execute(),
-                supabase.from("orders").select("*").execute(),
+            const [recSnap, visSnap, ordSnap] = await Promise.all([
+                get(ref(db, "records")),
+                get(ref(db, "visits")),
+                get(ref(db, "orders")),
             ]);
-            setRecords(recRes.data  || []);
-            setVisits (visRes.data  || []);
-            setOrders (ordRes.data  || []);
+            setRecords(snapToArray<CafeRecord>(recSnap));
+            setVisits(snapToArray<Visit>(visSnap));
+            setOrders(snapToArray<Order>(ordSnap));
             setLoading(false);
         };
         load();

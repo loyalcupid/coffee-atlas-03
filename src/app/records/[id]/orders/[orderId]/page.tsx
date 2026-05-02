@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Star, Save, Home } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/firebase";
+import { ref, get, update } from "firebase/database";
 
 export default function OrderDetail() {
     const params = useParams();
@@ -24,13 +25,9 @@ export default function OrderDetail() {
     useEffect(() => {
         const fetchOrder = async () => {
             try {
-                const { data, error } = await supabase
-                    .from('orders')
-                    .select('*')
-                    .eq('id', params.orderId)
-                    .single();
-
-                if (error) throw error;
+                const snap = await get(ref(db, `orders/${params.orderId}`));
+                if (!snap.exists()) throw new Error('order not found');
+                const data = { id: snap.key, ...snap.val() } as any;
                 setOrder(data);
                 setDrinkName(data.drink_name);
                 setPrice(data.price ?? 0);
@@ -54,13 +51,9 @@ export default function OrderDetail() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, memo })
-                .eq('id', params.orderId)
-                .execute();
-
-            if (error) throw error;
+            await update(ref(db, `orders/${params.orderId}`), {
+                drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, memo
+            });
             router.back();
         } catch (error) {
             console.error('Error saving order:', error);

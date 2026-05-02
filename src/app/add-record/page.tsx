@@ -4,7 +4,9 @@ import { useState, useRef } from "react";
 import { Coffee, MapPin, Calendar, Star, Send, Home, Camera, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { db, storage } from "@/lib/firebase";
+import { ref as dbRef, push } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface CoffeeOrder {
     drink: string;
@@ -69,9 +71,9 @@ export default function AddRecord() {
         try {
             const ext = file.name.split('.').pop();
             const path = `temp-${Date.now()}/${Math.random().toString(36).slice(2)}.${ext}`;
-            const { error } = await supabase.storage.from('cafe_images').upload(path, file);
-            if (error) throw error;
-            const { data: { publicUrl } } = supabase.storage.from('cafe_images').getPublicUrl(path);
+            const sRef = storageRef(storage, path);
+            await uploadBytes(sRef, file);
+            const publicUrl = await getDownloadURL(sRef);
             setAtmosphereImages(prev => [...prev, publicUrl]);
         } catch (err) {
             console.error(err);
@@ -90,45 +92,32 @@ export default function AddRecord() {
         }
         setLoading(true);
         try {
-            const { data: recordData, error: recordError } = await supabase
-                .from('records')
-                .insert([{
-                    name,
-                    location,
-                    rating: cafeRating,
-                    atmosphere_images: atmosphereImages,
-                    overall_memo: overallMemo,
-                }])
-                .select()
-                .execute();
+            const recordRef = await push(dbRef(db, 'records'), {
+                name,
+                location,
+                rating: cafeRating,
+                atmosphere_images: atmosphereImages,
+                overall_memo: overallMemo,
+            });
 
-            if (recordError || !recordData?.[0]) throw recordError ?? new Error('record 생성 실패');
+            const visitRef = await push(dbRef(db, 'visits'), {
+                record_id: recordRef.key,
+                date,
+            });
 
-            const { data: visitData, error: visitError } = await supabase
-                .from('visits')
-                .insert([{ record_id: recordData[0].id, date }])
-                .select()
-                .execute();
+            await Promise.all(coffeeOrders.map(o =>
+                push(dbRef(db, 'orders'), {
+                    visit_id: visitRef.key,
+                    drink_name: o.drink,
+                    price: Number(o.price) || 0,
+                    rating: o.coffeeRating,
+                    acidity: o.acidity,
+                    body: o.body,
+                    sweetness: o.sweetness,
+                    memo: o.coffeeMemo,
+                })
+            ));
 
-            if (visitError || !visitData?.[0]) throw visitError ?? new Error('visit 생성 실패');
-
-            const ordersPayload = coffeeOrders.map(o => ({
-                visit_id: visitData[0].id,
-                drink_name: o.drink,
-                price: Number(o.price) || 0,
-                rating: o.coffeeRating,
-                acidity: o.acidity,
-                body: o.body,
-                sweetness: o.sweetness,
-                memo: o.coffeeMemo,
-            }));
-
-            const { error: orderError } = await supabase
-                .from('orders')
-                .insert(ordersPayload)
-                .execute();
-
-            if (orderError) throw orderError;
             router.push('/records');
         } catch (err) {
             console.error(err);

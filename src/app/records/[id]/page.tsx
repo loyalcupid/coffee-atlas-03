@@ -4,7 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Coffee, MapPin, Calendar, Star, Edit2, Home, ArrowLeft, Trash2, Camera } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { db, storage, snapToArray } from "@/lib/firebase";
+import { ref as dbRef, get, push, update, remove } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function RecordDetail() {
     const params = useParams();
@@ -29,13 +31,9 @@ export default function RecordDetail() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const { data: recData, error: recError } = await supabase
-                    .from('records')
-                    .select('*')
-                    .eq('id', params.id)
-                    .single();
-
-                if (recError) throw recError;
+                const recSnap = await get(dbRef(db, `records/${params.id}`));
+                if (!recSnap.exists()) throw new Error('record not found');
+                const recData = { id: recSnap.key, ...recSnap.val() } as any;
                 setRecord(recData);
                 setName(recData.name);
                 setLocation(recData.location);
@@ -43,16 +41,12 @@ export default function RecordDetail() {
                 setOverallMemo(recData.overall_memo || "");
                 setAtmosphereImages(recData.atmosphere_images || []);
 
-                const { data: visitData, error: visitError } = await supabase
-                    .from('visits')
-                    .select('*')
-                    .eq('record_id', params.id)
-                    .order('date', { ascending: false })
-                    .execute();
-
-                if (visitError) throw visitError;
-                setVisits(visitData || []);
-                if (visitData && visitData.length > 0) setSelectedVisitId(visitData[0].id);
+                const visitsSnap = await get(dbRef(db, 'visits'));
+                const visitData = snapToArray<any>(visitsSnap)
+                    .filter(v => v.record_id === params.id)
+                    .sort((a, b) => b.date.localeCompare(a.date));
+                setVisits(visitData);
+                if (visitData.length > 0) setSelectedVisitId(visitData[0].id);
             } catch (error) {
                 console.error('Error fetching record data:', error);
                 alert('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -67,12 +61,8 @@ export default function RecordDetail() {
     useEffect(() => {
         const fetchOrders = async () => {
             if (!selectedVisitId) { setOrders([]); return; }
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('visit_id', selectedVisitId)
-                .execute();
-            if (!error) setOrders(data || []);
+            const snap = await get(dbRef(db, 'orders'));
+            setOrders(snapToArray<any>(snap).filter(o => o.visit_id === selectedVisitId));
         };
         fetchOrders();
     }, [selectedVisitId]);
@@ -80,25 +70,23 @@ export default function RecordDetail() {
     const handleAddVisit = async () => {
         const date = prompt("방문 날짜를 입력하세요 (YYYY-MM-DD)", new Date().toISOString().split('T')[0]);
         if (!date) return;
-        const { data, error } = await supabase
-            .from('visits')
-            .insert([{ record_id: params.id, date }])
-            .select()
-            .execute();
-        if (!error && data) {
-            setVisits([data[0], ...visits]);
-            setSelectedVisitId(data[0].id);
-        }
+        const visitRef = await push(dbRef(db, 'visits'), { record_id: params.id, date });
+        const newVisit = { id: visitRef.key, record_id: params.id, date };
+        setVisits([newVisit, ...visits]);
+        setSelectedVisitId(visitRef.key!);
     };
 
     const handleDeleteVisit = async (visitId: string) => {
         if (!confirm("이 방문 기록을 삭제하시겠습니까? 관련 주문 내역도 모두 삭제됩니다.")) return;
-        const { error } = await supabase.from('visits').delete().eq('id', visitId).execute();
-        if (!error) {
-            const updated = visits.filter(v => v.id !== visitId);
+        try {
+            const ordersSnap = await get(dbRef(db, 'orders'));
+            const toDelete = snapToArray<any>(ordersSnap).filter(o => o.visit_id === visitId);
+            await Promise.all(toDelete.map(o => remove(dbRef(db, `orders/${o.id}`))));
+            await remove(dbRef(db, `visits/${visitId}`));
+            const updated = visits.filter((v: any) => v.id !== visitId);
             setVisits(updated);
-            if (selectedVisitId === visitId) setSelectedVisitId(updated.length > 0 ? updated[0].id : null);
-        } else {
+            if (selectedVisitId === visitId) setSelectedVisitId(updated.length > 0 ? (updated[0] as any).id : null);
+        } catch {
             alert('방문 기록 삭제에 실패했습니다.');
         }
     };
@@ -107,12 +95,10 @@ export default function RecordDetail() {
         if (!selectedVisitId) { alert("먼저 방문 날짜를 선택하거나 추가해주세요."); return; }
         const drink_name = prompt("주문한 커피 이름을 입력하세요");
         if (!drink_name) return;
-        const { data, error } = await supabase
-            .from('orders')
-            .insert([{ visit_id: selectedVisitId, drink_name, price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3 }])
-            .select()
-            .execute();
-        if (!error && data) setOrders([...orders, data[0]]);
+        const orderRef = await push(dbRef(db, 'orders'), {
+            visit_id: selectedVisitId, drink_name, price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3
+        });
+        setOrders([...orders, { id: orderRef.key, visit_id: selectedVisitId, drink_name, price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3 }]);
     };
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,16 +109,11 @@ export default function RecordDetail() {
         try {
             const ext = file.name.split('.').pop();
             const filePath = `${params.id}/${Math.random().toString(36).slice(2)}.${ext}`;
-            const { error: uploadError } = await supabase.storage.from('cafe_images').upload(filePath, file);
-            if (uploadError) throw uploadError;
-            const { data: { publicUrl } } = supabase.storage.from('cafe_images').getPublicUrl(filePath);
+            const sRef = storageRef(storage, filePath);
+            await uploadBytes(sRef, file);
+            const publicUrl = await getDownloadURL(sRef);
             const newImages = [...atmosphereImages, publicUrl];
-            const { error: updateError } = await supabase
-                .from('records')
-                .update({ atmosphere_images: newImages })
-                .eq('id', params.id)
-                .execute();
-            if (updateError) throw updateError;
+            await update(dbRef(db, `records/${params.id}`), { atmosphere_images: newImages });
             setAtmosphereImages(newImages);
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -144,21 +125,28 @@ export default function RecordDetail() {
     };
 
     const handleUpdateBasicInfo = async () => {
-        const { error } = await supabase
-            .from('records')
-            .update({ name, location, rating, overall_memo: overallMemo })
-            .eq('id', params.id)
-            .execute();
-        if (!error) {
-            setRecord({ ...record, name, location, rating, overall_memo: overallMemo });
-            setIsEditing(false);
-        }
+        await update(dbRef(db, `records/${params.id}`), { name, location, rating, overall_memo: overallMemo });
+        setRecord({ ...record, name, location, rating, overall_memo: overallMemo });
+        setIsEditing(false);
     };
 
     const handleDelete = async () => {
         if (!confirm("정말로 이 기록을 삭제하시겠습니까?")) return;
-        const { error } = await supabase.from('records').delete().eq('id', params.id).execute();
-        if (!error) { alert('기록이 삭제되었습니다.'); router.push('/records'); }
+        const [visitsSnap, ordersSnap] = await Promise.all([
+            get(dbRef(db, 'visits')),
+            get(dbRef(db, 'orders')),
+        ]);
+        const visitsToDelete = snapToArray<any>(visitsSnap).filter(v => v.record_id === params.id);
+        const allOrders = snapToArray<any>(ordersSnap);
+        const visitIds = new Set(visitsToDelete.map(v => v.id));
+        const ordersToDelete = allOrders.filter(o => visitIds.has(o.visit_id));
+        await Promise.all([
+            ...ordersToDelete.map(o => remove(dbRef(db, `orders/${o.id}`))),
+            ...visitsToDelete.map(v => remove(dbRef(db, `visits/${v.id}`))),
+        ]);
+        await remove(dbRef(db, `records/${params.id}`));
+        alert('기록이 삭제되었습니다.');
+        router.push('/records');
     };
 
     // Derived values
