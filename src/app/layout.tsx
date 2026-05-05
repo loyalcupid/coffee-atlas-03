@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Cormorant_Garamond, Geist } from "next/font/google";
 import "./globals.css";
-import "leaflet/dist/leaflet.css";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
