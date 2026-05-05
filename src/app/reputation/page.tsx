@@ -1,0 +1,306 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
+import { db, snapToArray } from "@/lib/firebase";
+import { ref, get } from "firebase/database";
+import { Home, Star, MapPin, Search, TrendingUp, Coffee, Calendar, Users } from "lucide-react";
+
+interface CafeRecord { id: string; name: string; location: string; rating: number; author?: { uid: string; display_name: string }; }
+interface Visit      { id: string; record_id: string; date: string; }
+interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; }
+
+interface CafeSummary {
+  name: string;
+  location: string;
+  avgCafeRating: number;
+  visitCount: number;
+  recordCount: number;
+  topDrinks: string[];
+  avgAcidity: number;
+  avgBody: number;
+  avgSweetness: number;
+  reviewers: string[];
+}
+
+export default function ReputationPage() {
+  const [records, setRecords] = useState<CafeRecord[]>([]);
+  const [visits,  setVisits]  = useState<Visit[]>([]);
+  const [orders,  setOrders]  = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search,  setSearch]  = useState("");
+  const [sort,    setSort]    = useState<"rating" | "visits">("rating");
+
+  useEffect(() => {
+    const load = async () => {
+      const [r, v, o] = await Promise.all([
+        get(ref(db, "records")),
+        get(ref(db, "visits")),
+        get(ref(db, "orders")),
+      ]);
+      setRecords(snapToArray<CafeRecord>(r));
+      setVisits(snapToArray<Visit>(v));
+      setOrders(snapToArray<Order>(o));
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const cafeSummaries = useMemo<CafeSummary[]>(() => {
+    const visitsByRecord: Record<string, Visit[]> = {};
+    visits.forEach(v => { (visitsByRecord[v.record_id] ??= []).push(v); });
+    const ordersByVisit: Record<string, Order[]> = {};
+    orders.forEach(o => { (ordersByVisit[o.visit_id] ??= []).push(o); });
+
+    const cafeMap: Record<string, { name: string; location: string; records: CafeRecord[]; visits: Visit[]; orders: Order[] }> = {};
+    records.forEach(r => {
+      const key = `${r.name?.trim()}||${(r.location || "").trim()}`;
+      if (!cafeMap[key]) cafeMap[key] = { name: r.name?.trim(), location: (r.location || "").trim(), records: [], visits: [], orders: [] };
+      cafeMap[key].records.push(r);
+      const rv = visitsByRecord[r.id] || [];
+      cafeMap[key].visits.push(...rv);
+      rv.forEach(v => cafeMap[key].orders.push(...(ordersByVisit[v.id] || [])));
+    });
+
+    return Object.values(cafeMap)
+      .filter(c => c.name)
+      .map(c => {
+        const cafeRatings = c.records.map(r => r.rating).filter(Boolean);
+        const avgCafeRating = cafeRatings.length
+          ? +(cafeRatings.reduce((s, v) => s + v, 0) / cafeRatings.length).toFixed(1) : 0;
+
+        const drinkCnt: Record<string, number> = {};
+        c.orders.forEach(o => { if (o.drink_name) drinkCnt[o.drink_name] = (drinkCnt[o.drink_name] || 0) + 1; });
+        const topDrinks = Object.entries(drinkCnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
+
+        const tasteSrc = c.orders.filter(o => o.acidity);
+        const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,   0) / tasteSrc.length).toFixed(1) : 0;
+        const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,      0) / tasteSrc.length).toFixed(1) : 0;
+        const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness, 0) / tasteSrc.length).toFixed(1) : 0;
+
+        const reviewers = [...new Set(c.records.filter(r => r.author?.display_name).map(r => r.author!.display_name))];
+
+        return { name: c.name, location: c.location, avgCafeRating, visitCount: c.visits.length,
+                 recordCount: c.records.length, topDrinks, avgAcidity, avgBody, avgSweetness, reviewers };
+      });
+  }, [records, visits, orders]);
+
+  const globalAvg = useMemo(() => {
+    const rated = orders.filter(o => o.rating);
+    return rated.length ? +(rated.reduce((s, o) => s + o.rating, 0) / rated.length).toFixed(1) : 0;
+  }, [orders]);
+
+  const filtered = useMemo(() => {
+    const term = search.toLowerCase();
+    let list = term
+      ? cafeSummaries.filter(c => c.name.toLowerCase().includes(term) || c.location.toLowerCase().includes(term))
+      : [...cafeSummaries];
+    if (sort === "rating") list.sort((a, b) => b.avgCafeRating - a.avgCafeRating || b.visitCount - a.visitCount);
+    else                   list.sort((a, b) => b.visitCount - a.visitCount || b.avgCafeRating - a.avgCafeRating);
+    return list;
+  }, [cafeSummaries, search, sort]);
+
+  const medals = ["🥇", "🥈", "🥉"];
+
+  return (
+    <div className="min-h-screen cafe-bg">
+      {/* Header */}
+      <div className="w-full border-b border-[#D4AF37]/20 px-6 py-5">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors">
+              <Home size={20} />
+            </Link>
+            <span className="text-[#D4AF37]/30">/</span>
+            <div className="flex items-center gap-2">
+              <Star size={18} className="text-[#D4AF37]" />
+              <h1 className="playfair text-xl font-bold text-[#FCF5E5]">전국 카페 평판</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
+
+        {/* Title */}
+        <div className="text-center space-y-3">
+          <div className="gold-divider text-[#D4AF37]/50 text-xs tracking-[0.4em] uppercase cormorant">
+            National Café Reputation
+          </div>
+          <p className="cormorant text-[#FCF5E5]/45 text-lg font-light">
+            Coffee Atlas 유저들이 기록한 {loading ? "..." : cafeSummaries.length}곳의 카페 정보
+          </p>
+        </div>
+
+        {/* Stats */}
+        {!loading && (
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { icon: <Coffee size={18} />,   label: "등록된 카페",   value: cafeSummaries.length, unit: "곳" },
+              { icon: <Calendar size={18} />, label: "총 방문 기록",  value: visits.length,        unit: "회" },
+              { icon: <Star size={18} />,     label: "평균 커피 평점", value: globalAvg || "-",    unit: globalAvg ? "점" : "" },
+            ].map((s, i) => (
+              <div key={i} className="border border-[#D4AF37]/20 rounded-2xl p-5 bg-[#1a0f0a]/40 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center flex-shrink-0">
+                  {s.icon}
+                </div>
+                <div>
+                  <p className="playfair text-2xl font-bold text-[#FCF5E5]">
+                    {s.value}<span className="text-sm font-normal text-[#FCF5E5]/40 ml-0.5">{s.unit}</span>
+                  </p>
+                  <p className="cormorant text-[#FCF5E5]/40 text-sm">{s.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Search + Sort */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FCF5E5]/30" />
+            <input
+              type="text"
+              placeholder="카페 이름 또는 지역으로 검색..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 rounded-xl bg-[#1a0f0a]/60 border border-[#D4AF37]/20 text-[#FCF5E5] placeholder-[#FCF5E5]/25 focus:outline-none focus:border-[#D4AF37]/40 transition-all text-sm"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setSort("rating")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cormorant ${
+                sort === "rating"
+                  ? "bg-[#D4AF37] text-[#1a0f0a]"
+                  : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
+              }`}
+            >
+              <Star size={14} /> 평점순
+            </button>
+            <button
+              onClick={() => setSort("visits")}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cormorant ${
+                sort === "visits"
+                  ? "bg-[#D4AF37] text-[#1a0f0a]"
+                  : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
+              }`}
+            >
+              <TrendingUp size={14} /> 방문순
+            </button>
+          </div>
+        </div>
+
+        {/* List */}
+        {loading ? (
+          <div className="text-center py-24 cormorant text-[#FCF5E5]/30 text-xl">불러오는 중...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-24 space-y-4">
+            <Coffee size={48} className="mx-auto text-[#D4AF37]/20" />
+            <p className="playfair text-[#FCF5E5]/40 text-xl">
+              {search ? `"${search}" 검색 결과가 없습니다.` : "아직 등록된 카페가 없습니다."}
+            </p>
+            {!search && (
+              <Link href="/add-record" className="inline-block cormorant text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors text-lg">
+                첫 카페 기록하기 →
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filtered.map((cafe, i) => (
+              <div key={i} className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/40 transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    {/* Rank */}
+                    <div className="flex-shrink-0 w-10 text-center">
+                      {i < 3 ? (
+                        <span className="text-2xl">{medals[i]}</span>
+                      ) : (
+                        <span className="playfair text-xl font-bold text-[#FCF5E5]/30">{i + 1}</span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div>
+                        <h2 className="playfair text-xl font-bold text-[#FCF5E5]">{cafe.name}</h2>
+                        {cafe.location && (
+                          <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 text-sm mt-0.5">
+                            <MapPin size={12} />{cafe.location}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Taste bars */}
+                      {cafe.avgAcidity > 0 && (
+                        <div className="flex gap-4 flex-wrap">
+                          {[
+                            { label: "산미", val: cafe.avgAcidity,   color: "#7EC8E3" },
+                            { label: "바디", val: cafe.avgBody,      color: "#C8A97E" },
+                            { label: "단맛", val: cafe.avgSweetness, color: "#D4AF37" },
+                          ].map((t, ti) => (
+                            <div key={ti} className="flex items-center gap-2 min-w-[90px]">
+                              <span className="cormorant text-[#FCF5E5]/40 text-xs w-6">{t.label}</span>
+                              <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden w-16">
+                                <div className="h-full rounded-full" style={{ width: `${(t.val / 5) * 100}%`, backgroundColor: t.color }} />
+                              </div>
+                              <span className="cormorant text-[#FCF5E5]/50 text-xs">{t.val}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Top drinks */}
+                      {cafe.topDrinks.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {cafe.topDrinks.map((d, di) => (
+                            <span key={di} className="cormorant text-xs bg-[#D4AF37]/10 text-[#D4AF37]/70 border border-[#D4AF37]/15 px-2.5 py-0.5 rounded-full">
+                              {d}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reviewers */}
+                      {cafe.reviewers.length > 0 && (
+                        <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/30 text-xs">
+                          <Users size={11} />
+                          {cafe.reviewers.slice(0, 3).join(", ")}
+                          {cafe.reviewers.length > 3 && ` 외 ${cafe.reviewers.length - 3}명`}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Rating + visits */}
+                  <div className="flex-shrink-0 text-right space-y-2">
+                    <div className="flex items-center gap-1 justify-end">
+                      {[1,2,3,4,5].map(n => (
+                        <Star key={n} size={13}
+                          fill={cafe.avgCafeRating >= n ? "#D4AF37" : "none"}
+                          stroke="#D4AF37"
+                          strokeWidth={1.5}
+                          className="opacity-80"
+                        />
+                      ))}
+                    </div>
+                    {cafe.avgCafeRating > 0 && (
+                      <p className="playfair text-2xl font-bold text-[#D4AF37]">{cafe.avgCafeRating}</p>
+                    )}
+                    <p className="cormorant text-[#FCF5E5]/35 text-sm">{cafe.visitCount}회 방문</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <footer className="w-full py-8 text-center border-t border-[#D4AF37]/15 mt-8">
+        <p className="cormorant text-[#FCF5E5]/25 tracking-widest text-sm uppercase">
+          © 2026 Coffee Atlas · All rights reserved
+        </p>
+      </footer>
+    </div>
+  );
+}

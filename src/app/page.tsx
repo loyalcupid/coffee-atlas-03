@@ -1,9 +1,53 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Map, Star, Users, BookOpen, ScrollText } from "lucide-react";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { Map, Star, Users, BookOpen, ScrollText, LogIn, LogOut } from "lucide-react";
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center cafe-bg">
+
+      {/* Auth bar */}
+      <div className="w-full border-b border-[#D4AF37]/10 px-6 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-end gap-3">
+          {!authLoading && (
+            user ? (
+              <div className="flex items-center gap-3">
+                <span className="cormorant text-[#FCF5E5]/40 text-sm">
+                  {user.displayName || user.email}
+                </span>
+                <button
+                  onClick={() => signOut(auth)}
+                  className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 hover:text-[#D4AF37] transition-colors text-sm"
+                >
+                  <LogOut size={14} /> 로그아웃
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 hover:text-[#D4AF37] transition-colors text-sm"
+              >
+                <LogIn size={14} /> 로그인
+              </Link>
+            )
+          )}
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="w-full max-w-6xl px-6 py-24 flex flex-col items-center text-center space-y-10">
@@ -67,9 +111,7 @@ export default function Home() {
       <section className="w-full max-w-6xl px-6 pb-10">
         <Link href="/records" className="group block w-full">
           <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 hover:bg-[#D4AF37]/10 transition-all px-10 py-8 overflow-hidden">
-            {/* Decorative background glow */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-
             <div className="flex items-center gap-6">
               <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                 <ScrollText size={26} />
@@ -82,7 +124,6 @@ export default function Home() {
                 </p>
               </div>
             </div>
-
             <div className="flex items-center gap-2 text-[#D4AF37]/60 group-hover:text-[#D4AF37] transition-colors flex-shrink-0 ml-6">
               <span className="cormorant text-base tracking-widest hidden sm:block">둘러보기</span>
               <span className="text-xl group-hover:translate-x-1 transition-transform inline-block">→</span>
@@ -94,7 +135,6 @@ export default function Home() {
       {/* Features Section */}
       <section className="w-full py-20 border-t border-[#D4AF37]/15">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Section label */}
           <div className="gold-divider text-[#D4AF37]/50 text-xs tracking-[0.4em] uppercase cormorant mb-16">
             Our Features
           </div>
@@ -110,35 +150,35 @@ export default function Home() {
               </p>
             </Link>
 
-            <div className="space-y-4 flex flex-col items-center group">
-              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg">
+            <Link href="/reputation" className="space-y-4 flex flex-col items-center group cursor-pointer">
+              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Star size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-[#FCF5E5]">전국 카페 평판</h3>
+              <h3 className="playfair text-xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">전국 카페 평판</h3>
               <p className="cormorant text-[#FCF5E5]/50 text-lg font-light leading-snug">
                 전국 카페들의 실제 방문<br />후기와 평점을 확인하세요.
               </p>
-            </div>
+            </Link>
 
-            <div className="space-y-4 flex flex-col items-center group">
-              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg">
+            <Link href="/expert-tour" className="space-y-4 flex flex-col items-center group cursor-pointer">
+              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Users size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-[#FCF5E5]">커피 고수 탐방</h3>
+              <h3 className="playfair text-xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">커피 고수 탐방</h3>
               <p className="cormorant text-[#FCF5E5]/50 text-lg font-light leading-snug">
                 전문가들의 추천 카페와<br />브루잉 노하우를 만나보세요.
               </p>
-            </div>
+            </Link>
 
-            <div className="space-y-4 flex flex-col items-center group">
-              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg">
+            <Link href="/dashboard" className="space-y-4 flex flex-col items-center group cursor-pointer">
+              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <BookOpen size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-[#FCF5E5]">커피 백과사전</h3>
+              <h3 className="playfair text-xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">커피 취향 분석</h3>
               <p className="cormorant text-[#FCF5E5]/50 text-lg font-light leading-snug">
-                원두 품종부터 추출 방식까지<br />모든 지식을 탐색하세요.
+                나의 커피 취향을<br />데이터로 분석해보세요.
               </p>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
