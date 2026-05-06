@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Home, Coffee, Star, MapPin, Search, ExternalLink, ChevronRight } from "lucide-react";
 import { fetchRecordsWithDetails, RecordSummary } from "@/lib/data";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function MapPage() {
+    const { authLoading } = useRequireAuth();
     const [records, setRecords] = useState<RecordSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -27,6 +29,12 @@ export default function MapPage() {
         const query = encodeURIComponent(`${record.name} ${record.location}`);
         window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
     };
+
+    if (authLoading) return (
+        <div className="min-h-screen bg-coffee-cream/30 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-coffee-brown border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-coffee-cream/30 flex flex-col">

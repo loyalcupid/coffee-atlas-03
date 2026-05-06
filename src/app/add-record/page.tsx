@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { db, storage } from "@/lib/firebase";
 import { ref as dbRef, push } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 interface CoffeeOrder {
     drink: string;
@@ -30,6 +31,7 @@ const defaultCoffee = (): CoffeeOrder => ({
 
 export default function AddRecord() {
     const router = useRouter();
+    const { authLoading } = useRequireAuth();
 
     // Cafe info
     const [name, setName] = useState("");
@@ -126,6 +128,12 @@ export default function AddRecord() {
             setLoading(false);
         }
     };
+
+    if (authLoading) return (
+        <div className="min-h-screen bg-coffee-cream/30 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-coffee-brown border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-coffee-cream/30 p-6 md:p-12">

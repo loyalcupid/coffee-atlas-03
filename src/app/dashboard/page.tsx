@@ -5,6 +5,7 @@ import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, 
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 /* ─────────────────────────── types ─────────────────────────── */
 interface CafeRecord { id: string; name: string; location: string; rating: number; }
@@ -101,6 +102,7 @@ function getTasteType(acidity: number, body: number, sweetness: number): { emoji
 
 /* ══════════════════════ MAIN COMPONENT ═════════════════════════ */
 export default function Dashboard() {
+    const { authLoading } = useRequireAuth();
     const [records, setRecords] = useState<CafeRecord[]>([]);
     const [visits,  setVisits]  = useState<Visit[]>([]);
     const [orders,  setOrders]  = useState<Order[]>([]);
@@ -185,7 +187,7 @@ export default function Dashboard() {
         avgRating >  0   ? { label: "커피 입문자",   color: "text-coffee-brown/60" } :
                            { label: "기록 없음",     color: "text-coffee-brown/30" };
 
-    if (loading) return (
+    if (authLoading || loading) return (
         <div className="min-h-screen bg-[#FCF5E5] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-coffee-brown border-t-transparent rounded-full animate-spin" />

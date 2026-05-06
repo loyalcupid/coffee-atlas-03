@@ -4,8 +4,10 @@ import { Search, Filter, Coffee, MapPin, Star, ChevronRight, Home } from "lucide
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchRecordsWithDetails, RecordSummary } from "@/lib/data";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function MyRecords() {
+    const { authLoading } = useRequireAuth();
     const [records, setRecords] = useState<RecordSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +22,12 @@ export default function MyRecords() {
     const filteredRecords = records.filter((r) =>
         r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.location.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (authLoading) return (
+        <div className="min-h-screen bg-coffee-cream/30 flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-coffee-brown border-t-transparent rounded-full animate-spin" />
+        </div>
     );
 
     return (

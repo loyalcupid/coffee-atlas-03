@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { Map, Star, Users, BookOpen, ScrollText, LogIn, LogOut } from "lucide-react";
+import { Map, Star, Users, BookOpen, ScrollText, LogIn, LogOut, Library } from "lucide-react";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +17,9 @@ export default function Home() {
     });
     return () => unsub();
   }, []);
+
+  const guardedHref = (path: string) =>
+    !authLoading && !user ? `/login?redirect=${encodeURIComponent(path)}` : path;
 
   return (
     <div className="min-h-screen flex flex-col items-center cafe-bg">
@@ -92,13 +95,13 @@ export default function Home() {
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <Link
-              href="/add-record"
+              href={guardedHref("/add-record")}
               className="playfair bg-[#D4AF37] text-[#1a0f0a] px-10 py-4 rounded-lg text-base font-bold tracking-wide shadow-xl hover:bg-[#e8c84a] transition-all hover:-translate-y-0.5 text-center"
             >
               카페 방문 기록 남기기
             </Link>
             <Link
-              href="/dashboard"
+              href={guardedHref("/dashboard")}
               className="playfair bg-transparent border border-[#D4AF37]/50 text-[#D4AF37] px-10 py-4 rounded-lg text-base font-bold tracking-wide hover:bg-[#D4AF37]/10 transition-all text-center"
             >
               나의 커피 취향 분석
@@ -109,7 +112,7 @@ export default function Home() {
 
       {/* My Cafe Story Banner */}
       <section className="w-full max-w-6xl px-6 pb-10">
-        <Link href="/records" className="group block w-full">
+        <Link href={guardedHref("/records")} className="group block w-full">
           <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#D4AF37]/5 hover:bg-[#D4AF37]/10 transition-all px-10 py-8 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="flex items-center gap-6">
@@ -139,8 +142,8 @@ export default function Home() {
             Our Features
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 text-center">
-            <Link href="/map" className="space-y-4 flex flex-col items-center group cursor-pointer">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 text-center">
+            <Link href={guardedHref("/map")} className="space-y-4 flex flex-col items-center group cursor-pointer">
               <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Map size={28} />
               </div>
@@ -170,13 +173,23 @@ export default function Home() {
               </p>
             </Link>
 
-            <Link href="/dashboard" className="space-y-4 flex flex-col items-center group cursor-pointer">
+            <Link href={guardedHref("/dashboard")} className="space-y-4 flex flex-col items-center group cursor-pointer">
               <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <BookOpen size={28} />
               </div>
               <h3 className="playfair text-xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">커피 취향 분석</h3>
               <p className="cormorant text-[#FCF5E5]/50 text-lg font-light leading-snug">
                 나의 커피 취향을<br />데이터로 분석해보세요.
+              </p>
+            </Link>
+
+            <Link href="/encyclopedia" className="space-y-4 flex flex-col items-center group cursor-pointer">
+              <div className="w-16 h-16 border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
+                <Library size={28} />
+              </div>
+              <h3 className="playfair text-xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">커피 백과사전</h3>
+              <p className="cormorant text-[#FCF5E5]/50 text-lg font-light leading-snug">
+                원두·브루잉·음료까지<br />커피의 모든 지식을 담았습니다.
               </p>
             </Link>
           </div>
