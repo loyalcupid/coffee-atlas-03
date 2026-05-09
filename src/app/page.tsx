@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, BarChart3 } from "lucide-react";
+import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, BarChart3, Shield } from "lucide-react";
+
+const ADMIN_EMAIL = "doin25@gmail.com";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -30,6 +32,14 @@ export default function Home() {
           {!authLoading && (
             user ? (
               <div className="flex items-center gap-3">
+                {user.email === ADMIN_EMAIL && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1.5 bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/25 transition-all px-3 py-1 rounded-full text-xs font-bold cormorant tracking-widest uppercase"
+                  >
+                    <Shield size={12} /> 관리자
+                  </Link>
+                )}
                 <span className="cormorant text-[#FCF5E5]/40 text-sm">
                   {user.displayName || user.email}
                 </span>

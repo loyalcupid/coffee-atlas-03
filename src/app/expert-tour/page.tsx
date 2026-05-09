@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
 import { ref, onValue } from "firebase/database";
-import { Users, Plus, MapPin, ChevronRight, Home } from "lucide-react";
+import { Users, MapPin, ChevronRight, Home } from "lucide-react";
 
 interface ExpertCafe {
   id: string;
@@ -48,12 +48,7 @@ export default function ExpertTourPage() {
               <h1 className="playfair text-xl font-bold text-[#FCF5E5]">커피 고수 탐방</h1>
             </div>
           </div>
-          <Link
-            href="/expert-tour/new"
-            className="flex items-center gap-2 bg-[#D4AF37] text-[#1a0f0a] px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-[#e8c84a] transition-all"
-          >
-            <Plus size={16} /> 카페 등록
-          </Link>
+          <span className="cormorant text-[#FCF5E5]/25 text-sm">카페 등록은 관리자만 가능합니다</span>
         </div>
       </div>
 
@@ -70,16 +65,10 @@ export default function ExpertTourPage() {
         {loading ? (
           <div className="text-center py-24 text-[#FCF5E5]/30 cormorant text-xl">불러오는 중...</div>
         ) : cafes.length === 0 ? (
-          <div className="text-center py-24 space-y-6">
+          <div className="text-center py-24 space-y-4">
             <Users size={48} className="mx-auto text-[#D4AF37]/20" />
             <p className="playfair text-[#FCF5E5]/40 text-xl">아직 등록된 카페가 없습니다.</p>
-            <p className="cormorant text-[#FCF5E5]/25 text-lg">첫 번째 커피 고수 카페를 등록해보세요.</p>
-            <Link
-              href="/expert-tour/new"
-              className="inline-flex items-center gap-2 bg-[#D4AF37] text-[#1a0f0a] px-8 py-3 rounded-lg font-bold hover:bg-[#e8c84a] transition-all playfair"
-            >
-              <Plus size={18} /> 첫 카페 등록하기
-            </Link>
+            <p className="cormorant text-[#FCF5E5]/25 text-lg">관리자가 커피 고수 카페를 준비 중입니다.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

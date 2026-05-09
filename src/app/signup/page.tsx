@@ -3,12 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
+import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, User, UserPlus, Home } from "lucide-react";
 
 function getAuthErrorMsg(code: string): string {
@@ -43,6 +44,13 @@ export default function SignupPage() {
       if (displayName.trim()) {
         await updateProfile(cred.user, { displayName: displayName.trim() });
       }
+      await set(ref(db, `users/${cred.user.uid}`), {
+        email: cred.user.email,
+        displayName: displayName.trim() || null,
+        provider: "email",
+        createdAt: Date.now(),
+        lastLogin: Date.now(),
+      });
       router.push("/");
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
@@ -56,7 +64,21 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const u = cred.user;
+      const userRef = ref(db, `users/${u.uid}`);
+      const snap = await get(userRef);
+      if (!snap.exists()) {
+        await set(userRef, {
+          email: u.email,
+          displayName: u.displayName,
+          provider: "google.com",
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+        });
+      } else {
+        await update(userRef, { lastLogin: Date.now() });
+      }
       router.push("/");
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);

@@ -3,11 +3,12 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
+import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home } from "lucide-react";
 
 function getAuthErrorMsg(code: string): string {
@@ -38,7 +39,21 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const u = cred.user;
+      const userRef = ref(db, `users/${u.uid}`);
+      const snap = await get(userRef);
+      if (!snap.exists()) {
+        await set(userRef, {
+          email: u.email,
+          displayName: u.displayName,
+          provider: "email",
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+        });
+      } else {
+        await update(userRef, { lastLogin: Date.now() });
+      }
       router.push(redirectTo);
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
@@ -52,7 +67,21 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const u = cred.user;
+      const userRef = ref(db, `users/${u.uid}`);
+      const snap = await get(userRef);
+      if (!snap.exists()) {
+        await set(userRef, {
+          email: u.email,
+          displayName: u.displayName,
+          provider: "google.com",
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+        });
+      } else {
+        await update(userRef, { lastLogin: Date.now() });
+      }
       router.push(redirectTo);
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { db, storage } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { ref as dbRef, push } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+
+const ADMIN_EMAIL = "doin25@gmail.com";
 import {
   Home, Camera, Plus, Trash2, Send, Users, MapPin, Coffee, Clock, BookOpen
 } from "lucide-react";
@@ -37,6 +40,14 @@ function FieldLabel({ icon, text, required }: { icon: React.ReactNode; text: str
 
 export default function NewExpertCafePage() {
   const router = useRouter();
+
+  /* ── 관리자 전용 가드 ── */
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (!u || u.email !== ADMIN_EMAIL) router.replace("/");
+    });
+    return () => unsub();
+  }, [router]);
 
   const [cafeName, setCafeName] = useState("");
   const [cafePhotos, setCafePhotos] = useState<string[]>([]);
