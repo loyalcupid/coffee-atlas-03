@@ -7,17 +7,18 @@ import { fetchRecordsWithDetails, RecordSummary } from "@/lib/data";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function MyRecords() {
-    const { authLoading } = useRequireAuth();
+    const { user, authLoading } = useRequireAuth();
     const [records, setRecords] = useState<RecordSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        fetchRecordsWithDetails()
+        if (!user) return;
+        fetchRecordsWithDetails(user.uid)
             .then(setRecords)
             .catch((err) => console.error('Error fetching records:', err))
             .finally(() => setLoading(false));
-    }, []);
+    }, [user]);
 
     const filteredRecords = records.filter((r) =>
         r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -11,14 +11,14 @@ export interface RecordSummary {
   drink: string;
 }
 
-export async function fetchRecordsWithDetails(): Promise<RecordSummary[]> {
+export async function fetchRecordsWithDetails(uid: string): Promise<RecordSummary[]> {
   const [recSnap, visSnap, ordSnap] = await Promise.all([
     get(ref(db, 'records')),
     get(ref(db, 'visits')),
     get(ref(db, 'orders')),
   ]);
 
-  const records = snapToArray<any>(recSnap);
+  const records = snapToArray<any>(recSnap).filter(r => r.uid === uid);
   const allVisits = snapToArray<any>(visSnap);
   const allOrders = snapToArray<any>(ordSnap);
 

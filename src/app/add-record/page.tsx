@@ -31,7 +31,7 @@ const defaultCoffee = (): CoffeeOrder => ({
 
 export default function AddRecord() {
     const router = useRouter();
-    const { authLoading } = useRequireAuth();
+    const { user, authLoading } = useRequireAuth();
 
     // Cafe info
     const [name, setName] = useState("");
@@ -100,6 +100,7 @@ export default function AddRecord() {
                 rating: cafeRating,
                 atmosphere_images: atmosphereImages,
                 overall_memo: overallMemo,
+                uid: user!.uid,
             });
 
             const visitRef = await push(dbRef(db, 'visits'), {

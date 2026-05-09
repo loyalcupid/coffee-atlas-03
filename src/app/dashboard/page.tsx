@@ -102,26 +102,32 @@ function getTasteType(acidity: number, body: number, sweetness: number): { emoji
 
 /* ══════════════════════ MAIN COMPONENT ═════════════════════════ */
 export default function Dashboard() {
-    const { authLoading } = useRequireAuth();
+    const { user, authLoading } = useRequireAuth();
     const [records, setRecords] = useState<CafeRecord[]>([]);
     const [visits,  setVisits]  = useState<Visit[]>([]);
     const [orders,  setOrders]  = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!user) return;
         const load = async () => {
             const [recSnap, visSnap, ordSnap] = await Promise.all([
                 get(ref(db, "records")),
                 get(ref(db, "visits")),
                 get(ref(db, "orders")),
             ]);
-            setRecords(snapToArray<CafeRecord>(recSnap));
-            setVisits(snapToArray<Visit>(visSnap));
-            setOrders(snapToArray<Order>(ordSnap));
+            const myRecords = snapToArray<CafeRecord>(recSnap).filter((r: any) => r.uid === user.uid);
+            const myRecordIds = new Set(myRecords.map(r => r.id));
+            const myVisits  = snapToArray<Visit>(visSnap).filter(v => myRecordIds.has(v.record_id));
+            const myVisitIds = new Set(myVisits.map(v => v.id));
+            const myOrders  = snapToArray<Order>(ordSnap).filter(o => myVisitIds.has(o.visit_id));
+            setRecords(myRecords);
+            setVisits(myVisits);
+            setOrders(myOrders);
             setLoading(false);
         };
         load();
-    }, []);
+    }, [user]);
 
     /* ── derived stats ── */
     const now       = new Date();
