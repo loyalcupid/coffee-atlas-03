@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, BarChart3, Shield } from "lucide-react";
+import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, BarChart3, Shield, UserCircle } from "lucide-react";
 
 const ADMIN_EMAIL = "doin25@gmail.com";
 
@@ -43,6 +43,12 @@ export default function Home() {
                 <span className="cormorant text-[#FCF5E5]/40 text-sm">
                   {user.displayName || user.email}
                 </span>
+                <Link
+                  href="/mypage"
+                  className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 hover:text-[#D4AF37] transition-colors text-sm"
+                >
+                  <UserCircle size={14} /> 마이페이지
+                </Link>
                 <button
                   onClick={() => signOut(auth)}
                   className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 hover:text-[#D4AF37] transition-colors text-sm"
