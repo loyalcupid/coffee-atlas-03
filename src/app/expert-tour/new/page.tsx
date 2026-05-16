@@ -45,10 +45,12 @@ export default function NewExpertCafePage() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u || u.email !== ADMIN_EMAIL) router.replace("/");
+      else setAdminUid(u.uid);
     });
     return () => unsub();
   }, [router]);
 
+  const [adminUid, setAdminUid] = useState("");
   const [cafeName, setCafeName] = useState("");
   const [cafePhotos, setCafePhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -71,7 +73,7 @@ export default function NewExpertCafePage() {
 
   const uploadImage = async (file: File, path: string): Promise<string> => {
     const ext = file.name.split(".").pop();
-    const fullPath = `expertCafes/${path}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const fullPath = `uploads/${adminUid}/expertCafes/${path}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const sRef = storageRef(storage, fullPath);
     await uploadBytes(sRef, file);
     return getDownloadURL(sRef);

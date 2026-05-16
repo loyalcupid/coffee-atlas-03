@@ -72,7 +72,7 @@ export default function AddRecord() {
         setUploadingImage(true);
         try {
             const ext = file.name.split('.').pop();
-            const path = `temp-${Date.now()}/${Math.random().toString(36).slice(2)}.${ext}`;
+            const path = `uploads/${user!.uid}/records/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
             const sRef = storageRef(storage, path);
             await uploadBytes(sRef, file);
             const publicUrl = await getDownloadURL(sRef);

@@ -7,10 +7,12 @@ import Link from "next/link";
 import { db, storage, snapToArray } from "@/lib/firebase";
 import { ref as dbRef, get, push, update, remove } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function RecordDetail() {
     const params = useParams();
     const router = useRouter();
+    const { user } = useRequireAuth();
     const [record, setRecord] = useState<any>(null);
     const [visits, setVisits] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
@@ -108,7 +110,7 @@ export default function RecordDetail() {
         setUploadingImage(true);
         try {
             const ext = file.name.split('.').pop();
-            const filePath = `${params.id}/${Math.random().toString(36).slice(2)}.${ext}`;
+            const filePath = `uploads/${user!.uid}/records/${params.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
             const sRef = storageRef(storage, filePath);
             await uploadBytes(sRef, file);
             const publicUrl = await getDownloadURL(sRef);
