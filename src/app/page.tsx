@@ -71,10 +71,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="w-full max-w-6xl px-6 py-24 flex flex-col items-center text-center space-y-10">
 
-        {/* Top label */}
-        <div className="cormorant text-[#D4AF37]/70 tracking-[0.3em] text-sm uppercase">
-          Est. 2026 &nbsp;·&nbsp; Seoul, Korea
-        </div>
+        {/* Logo */}
+        <img
+          src="/허니앤로이로고.png"
+          alt="허니앤로이 로고"
+          className="h-32 object-contain"
+        />
 
         {/* Cafe Signboard */}
         <div className="sign-frame rounded-2xl px-12 py-12 md:px-20 md:py-16 flex flex-col items-center space-y-6 w-full max-w-3xl">
@@ -87,7 +89,7 @@ export default function Home() {
           {/* Main title */}
           <div className="space-y-2">
             <p className="cormorant text-[#D4AF37]/60 tracking-[0.5em] text-base uppercase">
-              당신의 커피 취향을 기록하다
+              당신의 커피 일기
             </p>
             <h1 className="cafe-sign-title text-6xl md:text-8xl text-[#FCF5E5] leading-none">
               Coffee
@@ -116,7 +118,7 @@ export default function Home() {
               className="playfair relative overflow-hidden bg-gradient-to-br from-[#f5d45a] via-[#D4AF37] to-[#b8922f] text-[#1a0f0a] px-14 py-7 rounded-2xl text-2xl font-bold tracking-wide shadow-[0_0_35px_rgba(212,175,55,0.45)] hover:shadow-[0_0_55px_rgba(212,175,55,0.7)] hover:-translate-y-1.5 transition-all duration-300 text-center flex items-center justify-center gap-3"
             >
               <ScrollText size={30} className="flex-shrink-0" />
-              카페 방문일지
+              카페 방문 기록
             </Link>
             <Link
               href={guardedHref("/dashboard")}

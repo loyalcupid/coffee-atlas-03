@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
-import { ref, onValue } from "firebase/database";
-import { Home, MapPin, Users, Coffee, Clock, BookOpen, ChevronLeft, ExternalLink } from "lucide-react";
+import { db, auth } from "@/lib/firebase";
+import { ref, onValue, remove } from "firebase/database";
+import { onAuthStateChanged } from "firebase/auth";
+import { Home, MapPin, Users, Coffee, Clock, BookOpen, ChevronLeft, ExternalLink, Pencil, Trash2 } from "lucide-react";
+
+const ADMIN_EMAIL = "doin25@gmail.com";
 
 interface ExpertCafe {
   id: string;
@@ -25,6 +28,8 @@ export default function ExpertCafeDetailPage() {
   const [cafe, setCafe] = useState<ExpertCafe | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onValue(ref(db, `expertCafes/${id}`), (snap) => {
@@ -34,6 +39,25 @@ export default function ExpertCafeDetailPage() {
     });
     return () => unsubscribe();
   }, [id, router]);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setIsAdmin(u?.email === ADMIN_EMAIL);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleDelete = async () => {
+    if (!confirm(`"${cafe?.name}" 카페를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    setDeleting(true);
+    try {
+      await remove(ref(db, `expertCafes/${id}`));
+      router.push("/expert-tour");
+    } catch {
+      alert("삭제 중 오류가 발생했습니다.");
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -235,6 +259,33 @@ export default function ExpertCafeDetailPage() {
         )}
 
       </div>
+
+      {/* ── 관리자 수정/삭제 버튼 ── */}
+      {isAdmin && (
+        <div className="max-w-4xl mx-auto px-6 pb-10">
+          <div className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 flex items-center gap-2 text-[#D4AF37]/40">
+              <span className="cormorant text-sm tracking-widest uppercase">관리자 메뉴</span>
+              <div className="flex-1 h-px bg-[#D4AF37]/15" />
+            </div>
+            <div className="flex gap-3">
+              <Link
+                href={`/expert-tour/${id}/edit`}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/70 transition-all cormorant text-base tracking-wider"
+              >
+                <Pencil size={16} /> 수정하기
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 transition-all cormorant text-base tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={16} /> {deleting ? "삭제 중..." : "삭제하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="w-full py-8 text-center border-t border-[#D4AF37]/15 mt-8">
         <p className="cormorant text-[#FCF5E5]/25 tracking-widest text-sm uppercase">

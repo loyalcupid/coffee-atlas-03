@@ -716,7 +716,7 @@ function EntryCard({ entry }: { entry: Entry }) {
 /* ══════════════════════ MAIN PAGE ═════════════════════════ */
 export default function EncyclopediaPage() {
   const [search, setSearch]         = useState("");
-  const [activeCategory, setActive] = useState("");
+  const [activeCategory, setActive] = useState("커피품종");
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
