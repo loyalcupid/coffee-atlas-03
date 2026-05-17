@@ -226,15 +226,25 @@ export default function ReputationPage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {REGIONS.map(r => {
                 const count = cafeSummaries.filter(c => c.region === r).length;
-                if (count === 0) return null;
+                const hasData = count > 0;
                 return (
                   <button
                     key={r}
-                    onClick={() => setRegionFilter(r as string)}
-                    className="border border-[#D4AF37]/20 rounded-2xl p-4 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/8 transition-all text-center group"
+                    onClick={() => setRegionFilter(r)}
+                    className={`border rounded-2xl p-4 transition-all text-center group ${
+                      hasData
+                        ? "border-[#D4AF37]/20 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/8 cursor-pointer"
+                        : "border-[#D4AF37]/8 bg-[#1a0f0a]/20 cursor-pointer hover:border-[#D4AF37]/20"
+                    }`}
                   >
-                    <p className="playfair text-lg font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">{r}</p>
-                    <p className="cormorant text-[#FCF5E5]/35 text-xs mt-1">{count}개</p>
+                    <p className={`playfair text-lg font-bold transition-colors ${
+                      hasData
+                        ? "text-[#FCF5E5] group-hover:text-[#D4AF37]"
+                        : "text-[#FCF5E5]/30"
+                    }`}>{r}</p>
+                    <p className={`cormorant text-xs mt-1 ${hasData ? "text-[#FCF5E5]/35" : "text-[#FCF5E5]/15"}`}>
+                      {hasData ? `${count}개` : "—"}
+                    </p>
                   </button>
                 );
               })}
