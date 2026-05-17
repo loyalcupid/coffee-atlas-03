@@ -6,13 +6,17 @@ import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
 import { Home, Star, MapPin, Search, TrendingUp, Coffee, Calendar, Users } from "lucide-react";
 
-interface CafeRecord { id: string; name: string; location: string; rating: number; author?: { uid: string; display_name: string }; }
+const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
+type Region = typeof REGIONS[number];
+
+interface CafeRecord { id: string; name: string; location: string; region?: string; rating: number; author?: { uid: string; display_name: string }; }
 interface Visit      { id: string; record_id: string; date: string; }
 interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; }
 
 interface CafeSummary {
   name: string;
   location: string;
+  region: string;
   avgCafeRating: number;
   visitCount: number;
   recordCount: number;
@@ -28,8 +32,9 @@ export default function ReputationPage() {
   const [visits,  setVisits]  = useState<Visit[]>([]);
   const [orders,  setOrders]  = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search,  setSearch]  = useState("");
-  const [sort,    setSort]    = useState<"rating" | "visits">("rating");
+  const [search,       setSearch]       = useState("");
+  const [sort,         setSort]         = useState<"rating" | "visits">("rating");
+  const [regionFilter, setRegionFilter] = useState<Region | "">("");
 
   useEffect(() => {
     const load = async () => {
@@ -52,10 +57,11 @@ export default function ReputationPage() {
     const ordersByVisit: Record<string, Order[]> = {};
     orders.forEach(o => { (ordersByVisit[o.visit_id] ??= []).push(o); });
 
-    const cafeMap: Record<string, { name: string; location: string; records: CafeRecord[]; visits: Visit[]; orders: Order[] }> = {};
+    const cafeMap: Record<string, { name: string; location: string; region: string; records: CafeRecord[]; visits: Visit[]; orders: Order[] }> = {};
     records.forEach(r => {
       const key = `${r.name?.trim()}||${(r.location || "").trim()}`;
-      if (!cafeMap[key]) cafeMap[key] = { name: r.name?.trim(), location: (r.location || "").trim(), records: [], visits: [], orders: [] };
+      if (!cafeMap[key]) cafeMap[key] = { name: r.name?.trim(), location: (r.location || "").trim(), region: r.region || "", records: [], visits: [], orders: [] };
+      if (!cafeMap[key].region && r.region) cafeMap[key].region = r.region;
       cafeMap[key].records.push(r);
       const rv = visitsByRecord[r.id] || [];
       cafeMap[key].visits.push(...rv);
@@ -80,7 +86,7 @@ export default function ReputationPage() {
 
         const reviewers = [...new Set(c.records.filter(r => r.author?.display_name).map(r => r.author!.display_name))];
 
-        return { name: c.name, location: c.location, avgCafeRating, visitCount: c.visits.length,
+        return { name: c.name, location: c.location, region: c.region, avgCafeRating, visitCount: c.visits.length,
                  recordCount: c.records.length, topDrinks, avgAcidity, avgBody, avgSweetness, reviewers };
       });
   }, [records, visits, orders]);
@@ -92,13 +98,15 @@ export default function ReputationPage() {
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
-    let list = term
-      ? cafeSummaries.filter(c => c.name.toLowerCase().includes(term) || c.location.toLowerCase().includes(term))
-      : [...cafeSummaries];
+    let list = cafeSummaries.filter(c => {
+      const matchText = !term || c.name.toLowerCase().includes(term) || c.location.toLowerCase().includes(term);
+      const matchRegion = !regionFilter || c.region === regionFilter;
+      return matchText && matchRegion;
+    });
     if (sort === "rating") list.sort((a, b) => b.avgCafeRating - a.avgCafeRating || b.visitCount - a.visitCount);
     else                   list.sort((a, b) => b.visitCount - a.visitCount || b.avgCafeRating - a.avgCafeRating);
     return list;
-  }, [cafeSummaries, search, sort]);
+  }, [cafeSummaries, search, sort, regionFilter]);
 
   const medals = ["🥇", "🥈", "🥉"];
 
@@ -191,6 +199,42 @@ export default function ReputationPage() {
           </div>
         </div>
 
+        {/* Region Filter */}
+        <div className="overflow-x-auto pb-1 -mx-1 px-1">
+          <div className="flex gap-2 w-max">
+            <button
+              onClick={() => setRegionFilter("")}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cormorant whitespace-nowrap ${
+                regionFilter === ""
+                  ? "bg-[#D4AF37] text-[#1a0f0a]"
+                  : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
+              }`}
+            >
+              전체
+            </button>
+            {REGIONS.map(r => {
+              const count = cafeSummaries.filter(c => c.region === r).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={r}
+                  onClick={() => setRegionFilter(regionFilter === r ? "" : r)}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cormorant whitespace-nowrap flex items-center gap-1.5 ${
+                    regionFilter === r
+                      ? "bg-[#D4AF37] text-[#1a0f0a]"
+                      : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
+                  }`}
+                >
+                  {r}
+                  <span className={`text-xs font-normal ${regionFilter === r ? "text-[#1a0f0a]/60" : "text-[#FCF5E5]/30"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* List */}
         {loading ? (
           <div className="text-center py-24 cormorant text-[#FCF5E5]/30 text-xl">불러오는 중...</div>
@@ -223,7 +267,14 @@ export default function ReputationPage() {
 
                     <div className="flex-1 min-w-0 space-y-2">
                       <div>
-                        <h2 className="playfair text-xl font-bold text-[#FCF5E5]">{cafe.name}</h2>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="playfair text-xl font-bold text-[#FCF5E5]">{cafe.name}</h2>
+                          {cafe.region && (
+                            <span className="cormorant text-xs bg-[#D4AF37]/15 text-[#D4AF37]/80 border border-[#D4AF37]/20 px-2 py-0.5 rounded-full">
+                              {cafe.region}
+                            </span>
+                          )}
+                        </div>
                         {cafe.location && (
                           <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 text-sm mt-0.5">
                             <MapPin size={12} />{cafe.location}

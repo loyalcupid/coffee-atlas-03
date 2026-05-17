@@ -19,6 +19,8 @@ interface CoffeeOrder {
     coffeeMemo: string;
 }
 
+const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
+
 const defaultCoffee = (): CoffeeOrder => ({
     drink: "",
     price: "",
@@ -36,6 +38,7 @@ export default function AddRecord() {
     // Cafe info
     const [name, setName] = useState("");
     const [location, setLocation] = useState("");
+    const [region, setRegion] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Coffee orders (multiple)
@@ -97,6 +100,7 @@ export default function AddRecord() {
             const recordRef = await push(dbRef(db, 'records'), {
                 name,
                 location,
+                region,
                 rating: cafeRating,
                 atmosphere_images: atmosphereImages,
                 overall_memo: overallMemo,
@@ -199,6 +203,28 @@ export default function AddRecord() {
                                     required
                                     className={inputCls}
                                 />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <FieldLabel icon={<MapPin size={15} />} text="지역" />
+                                <div className="flex flex-wrap gap-2">
+                                    {REGIONS.map(r => (
+                                        <button
+                                            key={r}
+                                            type="button"
+                                            onClick={() => setRegion(r === region ? "" : r)}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                                region === r
+                                                    ? "bg-coffee-brown text-coffee-cream shadow-md"
+                                                    : "bg-coffee-brown/5 text-coffee-brown/60 hover:bg-coffee-brown/15"
+                                            }`}
+                                        >
+                                            {r}
+                                        </button>
+                                    ))}
+                                </div>
+                                {region && (
+                                    <p className="text-xs text-coffee-brown/40">선택된 지역: <span className="font-bold text-coffee-brown/60">{region}</span> · 다시 클릭하면 해제됩니다</p>
+                                )}
                             </div>
                         </div>
                     </FormSection>
