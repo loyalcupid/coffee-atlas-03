@@ -34,7 +34,7 @@ export default function ReputationPage() {
   const [loading, setLoading] = useState(true);
   const [search,       setSearch]       = useState("");
   const [sort,         setSort]         = useState<"rating" | "visits">("rating");
-  const [regionFilter, setRegionFilter] = useState<Region | "">("");
+  const [regionFilter, setRegionFilter] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -100,7 +100,8 @@ export default function ReputationPage() {
     const term = search.toLowerCase();
     let list = cafeSummaries.filter(c => {
       const matchText = !term || c.name.toLowerCase().includes(term) || c.location.toLowerCase().includes(term);
-      const matchRegion = !regionFilter || c.region === regionFilter;
+      const matchRegion = !regionFilter
+        || (regionFilter === "미분류" ? !c.region : c.region === regionFilter);
       return matchText && matchRegion;
     });
     if (sort === "rating") list.sort((a, b) => b.avgCafeRating - a.avgCafeRating || b.visitCount - a.visitCount);
@@ -199,64 +200,69 @@ export default function ReputationPage() {
           </div>
         </div>
 
-        {/* Region Filter */}
-        <div className="overflow-x-auto pb-1 -mx-1 px-1">
-          <div className="flex gap-2 w-max">
+        {/* Region tabs — 지역 선택 중일 때만 표시 */}
+        {regionFilter && !loading && (
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setRegionFilter("")}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cormorant whitespace-nowrap ${
-                regionFilter === ""
-                  ? "bg-[#D4AF37] text-[#1a0f0a]"
-                  : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
-              }`}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50 transition-all cormorant"
             >
-              전체
+              ← 전체 지역
             </button>
-            {REGIONS.map(r => {
-              const count = cafeSummaries.filter(c => c.region === r).length;
-              if (count === 0) return null;
-              return (
-                <button
-                  key={r}
-                  onClick={() => setRegionFilter(regionFilter === r ? "" : r)}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all cormorant whitespace-nowrap flex items-center gap-1.5 ${
-                    regionFilter === r
-                      ? "bg-[#D4AF37] text-[#1a0f0a]"
-                      : "border border-[#D4AF37]/25 text-[#FCF5E5]/50 hover:border-[#D4AF37]/50"
-                  }`}
-                >
-                  {r}
-                  <span className={`text-xs font-normal ${regionFilter === r ? "text-[#1a0f0a]/60" : "text-[#FCF5E5]/30"}`}>
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+            <span className="bg-[#D4AF37] text-[#1a0f0a] px-4 py-2 rounded-xl text-sm font-bold cormorant">
+              {regionFilter}
+            </span>
           </div>
-        </div>
+        )}
 
-        {/* List */}
+        {/* Main Content */}
         {loading ? (
           <div className="text-center py-24 cormorant text-[#FCF5E5]/30 text-xl">불러오는 중...</div>
+
+        ) : !regionFilter && !search ? (
+          /* 지역 선택 그리드 */
+          <div className="space-y-4">
+            <p className="cormorant text-[#FCF5E5]/35 text-sm tracking-wide">지역을 선택하세요</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {REGIONS.map(r => {
+                const count = cafeSummaries.filter(c => c.region === r).length;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => setRegionFilter(r as string)}
+                    className="border border-[#D4AF37]/20 rounded-2xl p-4 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/8 transition-all text-center group"
+                  >
+                    <p className="playfair text-lg font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">{r}</p>
+                    <p className="cormorant text-[#FCF5E5]/35 text-xs mt-1">{count}개</p>
+                  </button>
+                );
+              })}
+            </div>
+            {cafeSummaries.filter(c => !c.region).length > 0 && (
+              <button
+                onClick={() => setRegionFilter("미분류")}
+                className="border border-[#D4AF37]/20 rounded-2xl px-5 py-3 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/60 transition-all cormorant text-[#FCF5E5]/40 text-sm hover:text-[#FCF5E5]/60"
+              >
+                지역 미설정 카페 {cafeSummaries.filter(c => !c.region).length}개 보기 →
+              </button>
+            )}
+          </div>
+
         ) : filtered.length === 0 ? (
           <div className="text-center py-24 space-y-4">
             <Coffee size={48} className="mx-auto text-[#D4AF37]/20" />
             <p className="playfair text-[#FCF5E5]/40 text-xl">
-              {search ? `"${search}" 검색 결과가 없습니다.` : "아직 등록된 카페가 없습니다."}
+              {search ? `"${search}" 검색 결과가 없습니다.` : `${regionFilter} 지역에 등록된 카페가 없습니다.`}
             </p>
-            {!search && (
-              <Link href="/add-record" className="inline-block cormorant text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors text-lg">
-                첫 카페 기록하기 →
-              </Link>
-            )}
           </div>
+
         ) : (
           <div className="space-y-4">
             {filtered.map((cafe, i) => (
               <div key={i} className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/40 transition-all">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
-                    {/* Rank */}
                     <div className="flex-shrink-0 w-10 text-center">
                       {i < 3 ? (
                         <span className="text-2xl">{medals[i]}</span>
@@ -282,7 +288,6 @@ export default function ReputationPage() {
                         )}
                       </div>
 
-                      {/* Taste bars */}
                       {cafe.avgAcidity > 0 && (
                         <div className="flex gap-4 flex-wrap">
                           {[
@@ -301,7 +306,6 @@ export default function ReputationPage() {
                         </div>
                       )}
 
-                      {/* Top drinks */}
                       {cafe.topDrinks.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {cafe.topDrinks.map((d, di) => (
@@ -312,7 +316,6 @@ export default function ReputationPage() {
                         </div>
                       )}
 
-                      {/* Reviewers */}
                       {cafe.reviewers.length > 0 && (
                         <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/30 text-xs">
                           <Users size={11} />
@@ -323,7 +326,6 @@ export default function ReputationPage() {
                     </div>
                   </div>
 
-                  {/* Rating + visits */}
                   <div className="flex-shrink-0 text-right space-y-2">
                     <div className="flex items-center gap-1 justify-end">
                       {[1,2,3,4,5].map(n => (
