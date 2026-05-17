@@ -5,6 +5,7 @@ export interface RecordSummary {
   id: string;
   name: string;
   location: string;
+  region?: string;
   rating: number;
   atmosphere_images?: string[];
   date: string;

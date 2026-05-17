@@ -1,6 +1,9 @@
 "use client";
 
 import { Search, Filter, Coffee, MapPin, Star, ChevronRight, Home } from "lucide-react";
+
+const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
+type Region = typeof REGIONS[number];
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchRecordsWithDetails, RecordSummary } from "@/lib/data";
@@ -11,6 +14,7 @@ export default function MyRecords() {
     const [records, setRecords] = useState<RecordSummary[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [regionFilter, setRegionFilter] = useState<Region | "">();
 
     useEffect(() => {
         if (!user) return;
@@ -20,10 +24,14 @@ export default function MyRecords() {
             .finally(() => setLoading(false));
     }, [user]);
 
-    const filteredRecords = records.filter((r) =>
-        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredRecords = records.filter((r) => {
+        const matchText = r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            r.location.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchRegion = !regionFilter || r.region === regionFilter;
+        return matchText && matchRegion;
+    });
+
+    const activeRegions = REGIONS.filter(r => records.some(rec => rec.region === r));
 
     if (authLoading) return (
         <div className="min-h-screen bg-coffee-cream/30 flex items-center justify-center">
@@ -47,24 +55,63 @@ export default function MyRecords() {
                 </div>
 
                 {/* Search & Filter */}
-                <div className="flex gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-coffee-brown/30" size={20} />
-                        <input
-                            type="text"
-                            placeholder="카페 이름이나 위치로 검색..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-coffee-brown/20 transition-all shadow-sm"
-                        />
+                <div className="space-y-3">
+                    <div className="flex gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-coffee-brown/30" size={20} />
+                            <input
+                                type="text"
+                                placeholder="카페 이름이나 위치로 검색..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-12 pr-4 py-4 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-coffee-brown/20 transition-all shadow-sm"
+                            />
+                        </div>
+                        <button
+                            onClick={() => { setSearchTerm(""); setRegionFilter(""); }}
+                            className="bg-white border border-coffee-brown/10 p-4 rounded-xl text-coffee-brown/60 hover:text-coffee-brown transition-colors shadow-sm"
+                            title="필터 초기화"
+                        >
+                            <Filter size={20} />
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setSearchTerm("")}
-                        className="bg-white border border-coffee-brown/10 p-4 rounded-xl text-coffee-brown/60 hover:text-coffee-brown transition-colors shadow-sm"
-                        title="필터 초기화"
-                    >
-                        <Filter size={20} />
-                    </button>
+
+                    {/* Region Tabs */}
+                    {!loading && activeRegions.length > 0 && (
+                        <div className="overflow-x-auto pb-1 -mx-1 px-1">
+                            <div className="flex gap-2 w-max">
+                                <button
+                                    onClick={() => setRegionFilter("")}
+                                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${
+                                        !regionFilter
+                                            ? "bg-coffee-brown text-coffee-cream shadow-md"
+                                            : "bg-white border border-coffee-brown/10 text-coffee-brown/50 hover:border-coffee-brown/30"
+                                    }`}
+                                >
+                                    전체
+                                </button>
+                                {activeRegions.map(r => {
+                                    const count = records.filter(rec => rec.region === r).length;
+                                    return (
+                                        <button
+                                            key={r}
+                                            onClick={() => setRegionFilter(regionFilter === r ? "" : r)}
+                                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                                                regionFilter === r
+                                                    ? "bg-coffee-brown text-coffee-cream shadow-md"
+                                                    : "bg-white border border-coffee-brown/10 text-coffee-brown/50 hover:border-coffee-brown/30"
+                                            }`}
+                                        >
+                                            {r}
+                                            <span className={`text-xs font-normal ${regionFilter === r ? "text-coffee-cream/60" : "text-coffee-brown/30"}`}>
+                                                {count}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Records List */}
@@ -85,11 +132,16 @@ export default function MyRecords() {
                                     <Coffee size={28} />
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="text-lg font-bold text-coffee-brown">{record.name}</h3>
                                         <div className="flex items-center text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 rounded">
                                             <Star size={12} fill="currentColor" /> {record.rating}
                                         </div>
+                                        {record.region && (
+                                            <span className="text-xs text-coffee-brown/60 font-medium bg-coffee-brown/8 border border-coffee-brown/10 px-2 py-0.5 rounded-full">
+                                                {record.region}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-coffee-brown/60 text-sm">{record.drink}</p>
                                     <div className="flex items-center gap-4 mt-1">
