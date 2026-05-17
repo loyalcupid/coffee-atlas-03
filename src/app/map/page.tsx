@@ -27,7 +27,7 @@ export default function MapPage() {
     );
 
     const openInNaverMaps = (record: RecordSummary) => {
-        const query = encodeURIComponent(`${record.name} ${record.location}`);
+        const query = encodeURIComponent(record.location);
         window.open(`https://map.naver.com/v5/search/${query}`, "_blank");
     };
 
