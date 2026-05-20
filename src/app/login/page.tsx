@@ -1,25 +1,36 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home } from "lucide-react";
 
+/** 모바일 또는 인앱 브라우저 여부 감지 */
+function isMobileOrWebView(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  // 인앱 브라우저 패턴 (카카오, 인스타, 삼성 등) 또는 일반 모바일
+  return /KAKAOTALK|NAVER|Instagram|FB_IAB|FB4A|FBAV|SamsungBrowser/i.test(ua)
+    || /Android|iPhone|iPad|iPod/i.test(ua);
+}
+
 function getAuthErrorMsg(code: string): string {
   const map: Record<string, string> = {
-    "auth/invalid-credential":      "이메일 또는 비밀번호가 올바르지 않습니다.",
-    "auth/user-not-found":          "등록되지 않은 이메일입니다.",
-    "auth/wrong-password":          "비밀번호가 올바르지 않습니다.",
-    "auth/invalid-email":           "유효하지 않은 이메일 형식입니다.",
-    "auth/too-many-requests":       "잠시 후 다시 시도해주세요.",
-    "auth/network-request-failed":  "네트워크 오류가 발생했습니다.",
-    "auth/popup-closed-by-user":    "",
+    "auth/invalid-credential": "이메일 또는 비밀번호가 올바르지 않습니다.",
+    "auth/user-not-found": "등록되지 않은 이메일입니다.",
+    "auth/wrong-password": "비밀번호가 올바르지 않습니다.",
+    "auth/invalid-email": "유효하지 않은 이메일 형식입니다.",
+    "auth/too-many-requests": "잠시 후 다시 시도해주세요.",
+    "auth/network-request-failed": "네트워크 오류가 발생했습니다.",
+    "auth/popup-closed-by-user": "",
     "auth/cancelled-popup-request": "",
   };
   return map[code] ?? "로그인 중 오류가 발생했습니다.";
@@ -29,10 +40,40 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 리디렉션 방식 로그인 후 결과 처리
+  useEffect(() => {
+    setLoading(true);
+    getRedirectResult(auth)
+      .then(async (cred) => {
+        if (!cred) return;
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        router.push(redirectTo);
+      })
+      .catch((err: unknown) => {
+        const msg = getAuthErrorMsg((err as { code: string }).code);
+        if (msg) setError(msg);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,27 +108,34 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      const u = cred.user;
-      const userRef = ref(db, `users/${u.uid}`);
-      const snap = await get(userRef);
-      if (!snap.exists()) {
-        await set(userRef, {
-          email: u.email,
-          displayName: u.displayName,
-          provider: "google.com",
-          createdAt: Date.now(),
-          lastLogin: Date.now(),
-        });
+      if (isMobileOrWebView()) {
+        // 모바일/인앱 브라우저: 리디렉션 방식 (페이지 이동 후 useEffect에서 결과 처리)
+        await signInWithRedirect(auth, googleProvider);
       } else {
-        await update(userRef, { lastLogin: Date.now() });
+        // 데스크탑: 팝업 방식
+        const cred = await signInWithPopup(auth, googleProvider);
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        router.push(redirectTo);
       }
-      router.push(redirectTo);
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
       if (msg) setError(msg);
     } finally {
-      setLoading(false);
+      // 리디렉션 방식일 때는 페이지가 이동하므로 loading 상태 유지
+      if (!isMobileOrWebView()) setLoading(false);
     }
   };
 
@@ -120,10 +168,10 @@ function LoginForm() {
             className="w-full flex items-center justify-center gap-3 bg-white text-[#3D2B1F] py-3.5 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all shadow-md disabled:opacity-60"
           >
             <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-              <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
-              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+              <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
+              <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+              <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" />
+              <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
             </svg>
             Google로 로그인
           </button>
