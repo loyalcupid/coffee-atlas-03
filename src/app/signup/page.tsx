@@ -7,6 +7,8 @@ import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
@@ -20,6 +22,11 @@ function detectInAppBrowser(): boolean {
     /Android.*wv\)/i.test(ua) ||
     (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && /AppleWebKit/i.test(ua))
   );
+}
+
+function isMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function getAuthErrorMsg(code: string): string {
@@ -47,6 +54,36 @@ export default function SignupPage() {
 
   useEffect(() => {
     setInAppBrowser(detectInAppBrowser());
+  }, []);
+
+  // 모바일 redirect 로그인 완료 후 결과 처리
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (cred) => {
+        if (!cred) return;
+        setLoading(true);
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        router.push("/");
+      })
+      .catch((err: unknown) => {
+        const msg = getAuthErrorMsg((err as { code: string }).code);
+        if (msg) setError(msg);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -83,26 +120,30 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      const u = cred.user;
-      const userRef = ref(db, `users/${u.uid}`);
-      const snap = await get(userRef);
-      if (!snap.exists()) {
-        await set(userRef, {
-          email: u.email,
-          displayName: u.displayName,
-          provider: "google.com",
-          createdAt: Date.now(),
-          lastLogin: Date.now(),
-        });
+      if (isMobileBrowser()) {
+        await signInWithRedirect(auth, googleProvider);
       } else {
-        await update(userRef, { lastLogin: Date.now() });
+        const cred = await signInWithPopup(auth, googleProvider);
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        router.push("/");
+        setLoading(false);
       }
-      router.push("/");
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
       if (msg) setError(msg);
-    } finally {
       setLoading(false);
     }
   };

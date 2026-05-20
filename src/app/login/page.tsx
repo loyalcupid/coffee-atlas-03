@@ -7,6 +7,8 @@ import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home, AlertTriangle } from "lucide-react";
@@ -19,6 +21,11 @@ function detectInAppBrowser(): boolean {
     /Android.*wv\)/i.test(ua) ||
     (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && /AppleWebKit/i.test(ua))
   );
+}
+
+function isMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function getAuthErrorMsg(code: string): string {
@@ -40,14 +47,46 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/";
-  const [email, setEmail]           = useState("");
-  const [password, setPassword]     = useState("");
-  const [error, setError]           = useState("");
-  const [loading, setLoading]       = useState(false);
+  const [email, setEmail]               = useState("");
+  const [password, setPassword]         = useState("");
+  const [error, setError]               = useState("");
+  const [loading, setLoading]           = useState(false);
   const [inAppBrowser, setInAppBrowser] = useState(false);
 
   useEffect(() => {
     setInAppBrowser(detectInAppBrowser());
+  }, []);
+
+  // 모바일 redirect 로그인 완료 후 결과 처리
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then(async (cred) => {
+        if (!cred) return;
+        setLoading(true);
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        const saved = sessionStorage.getItem("googleLoginRedirect") || "/";
+        sessionStorage.removeItem("googleLoginRedirect");
+        router.push(saved);
+      })
+      .catch((err: unknown) => {
+        const msg = getAuthErrorMsg((err as { code: string }).code);
+        if (msg) setError(msg);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -87,26 +126,33 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      const u = cred.user;
-      const userRef = ref(db, `users/${u.uid}`);
-      const snap = await get(userRef);
-      if (!snap.exists()) {
-        await set(userRef, {
-          email: u.email,
-          displayName: u.displayName,
-          provider: "google.com",
-          createdAt: Date.now(),
-          lastLogin: Date.now(),
-        });
+      if (isMobileBrowser()) {
+        // 모바일: 새 탭 opener 통신 실패 문제를 피해 redirect 방식 사용
+        sessionStorage.setItem("googleLoginRedirect", redirectTo);
+        await signInWithRedirect(auth, googleProvider);
       } else {
-        await update(userRef, { lastLogin: Date.now() });
+        // 데스크탑: popup 방식
+        const cred = await signInWithPopup(auth, googleProvider);
+        const u = cred.user;
+        const userRef = ref(db, `users/${u.uid}`);
+        const snap = await get(userRef);
+        if (!snap.exists()) {
+          await set(userRef, {
+            email: u.email,
+            displayName: u.displayName,
+            provider: "google.com",
+            createdAt: Date.now(),
+            lastLogin: Date.now(),
+          });
+        } else {
+          await update(userRef, { lastLogin: Date.now() });
+        }
+        router.push(redirectTo);
+        setLoading(false);
       }
-      router.push(redirectTo);
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
       if (msg) setError(msg);
-    } finally {
       setLoading(false);
     }
   };
