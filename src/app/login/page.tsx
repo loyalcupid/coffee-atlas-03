@@ -1,36 +1,26 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home } from "lucide-react";
 
-/** 모바일 또는 인앱 브라우저 여부 감지 */
-function isMobileOrWebView(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  // 인앱 브라우저 패턴 (카카오, 인스타, 삼성 등) 또는 일반 모바일
-  return /KAKAOTALK|NAVER|Instagram|FB_IAB|FB4A|FBAV|SamsungBrowser/i.test(ua)
-    || /Android|iPhone|iPad|iPod/i.test(ua);
-}
-
 function getAuthErrorMsg(code: string): string {
   const map: Record<string, string> = {
-    "auth/invalid-credential": "이메일 또는 비밀번호가 올바르지 않습니다.",
-    "auth/user-not-found": "등록되지 않은 이메일입니다.",
-    "auth/wrong-password": "비밀번호가 올바르지 않습니다.",
-    "auth/invalid-email": "유효하지 않은 이메일 형식입니다.",
-    "auth/too-many-requests": "잠시 후 다시 시도해주세요.",
-    "auth/network-request-failed": "네트워크 오류가 발생했습니다.",
-    "auth/popup-closed-by-user": "",
+    "auth/invalid-credential":      "이메일 또는 비밀번호가 올바르지 않습니다.",
+    "auth/user-not-found":          "등록되지 않은 이메일입니다.",
+    "auth/wrong-password":          "비밀번호가 올바르지 않습니다.",
+    "auth/invalid-email":           "유효하지 않은 이메일 형식입니다.",
+    "auth/too-many-requests":       "잠시 후 다시 시도해주세요.",
+    "auth/network-request-failed":  "네트워크 오류가 발생했습니다.",
+    "auth/popup-blocked":           "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.",
+    "auth/popup-closed-by-user":    "",
     "auth/cancelled-popup-request": "",
   };
   return map[code] ?? "로그인 중 오류가 발생했습니다.";
@@ -44,36 +34,6 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // 리디렉션 방식 로그인 후 결과 처리
-  useEffect(() => {
-    setLoading(true);
-    getRedirectResult(auth)
-      .then(async (cred) => {
-        if (!cred) return;
-        const u = cred.user;
-        const userRef = ref(db, `users/${u.uid}`);
-        const snap = await get(userRef);
-        if (!snap.exists()) {
-          await set(userRef, {
-            email: u.email,
-            displayName: u.displayName,
-            provider: "google.com",
-            createdAt: Date.now(),
-            lastLogin: Date.now(),
-          });
-        } else {
-          await update(userRef, { lastLogin: Date.now() });
-        }
-        router.push(redirectTo);
-      })
-      .catch((err: unknown) => {
-        const msg = getAuthErrorMsg((err as { code: string }).code);
-        if (msg) setError(msg);
-      })
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,34 +68,27 @@ function LoginForm() {
     setError("");
     setLoading(true);
     try {
-      if (isMobileOrWebView()) {
-        // 모바일/인앱 브라우저: 리디렉션 방식 (페이지 이동 후 useEffect에서 결과 처리)
-        await signInWithRedirect(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const u = cred.user;
+      const userRef = ref(db, `users/${u.uid}`);
+      const snap = await get(userRef);
+      if (!snap.exists()) {
+        await set(userRef, {
+          email: u.email,
+          displayName: u.displayName,
+          provider: "google.com",
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+        });
       } else {
-        // 데스크탑: 팝업 방식
-        const cred = await signInWithPopup(auth, googleProvider);
-        const u = cred.user;
-        const userRef = ref(db, `users/${u.uid}`);
-        const snap = await get(userRef);
-        if (!snap.exists()) {
-          await set(userRef, {
-            email: u.email,
-            displayName: u.displayName,
-            provider: "google.com",
-            createdAt: Date.now(),
-            lastLogin: Date.now(),
-          });
-        } else {
-          await update(userRef, { lastLogin: Date.now() });
-        }
-        router.push(redirectTo);
+        await update(userRef, { lastLogin: Date.now() });
       }
+      router.push(redirectTo);
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
       if (msg) setError(msg);
     } finally {
-      // 리디렉션 방식일 때는 페이지가 이동하므로 loading 상태 유지
-      if (!isMobileOrWebView()) setLoading(false);
+      setLoading(false);
     }
   };
 
