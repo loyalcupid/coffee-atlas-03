@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db, googleProvider } from "@/lib/firebase";
@@ -10,7 +10,17 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
-import { Coffee, Mail, Lock, User, UserPlus, Home } from "lucide-react";
+import { Coffee, Mail, Lock, User, UserPlus, Home, AlertTriangle } from "lucide-react";
+
+function detectInAppBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return (
+    /KAKAOTALK|NAVER|Instagram|FB_IAB|FB4A|FBAV|Line\/|Twitter/i.test(ua) ||
+    /Android.*wv\)/i.test(ua) ||
+    (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua) && /AppleWebKit/i.test(ua))
+  );
+}
 
 function getAuthErrorMsg(code: string): string {
   const map: Record<string, string> = {
@@ -33,6 +43,11 @@ export default function SignupPage() {
   const [confirm, setConfirm]         = useState("");
   const [error, setError]             = useState("");
   const [loading, setLoading]         = useState(false);
+  const [inAppBrowser, setInAppBrowser] = useState(false);
+
+  useEffect(() => {
+    setInAppBrowser(detectInAppBrowser());
+  }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +76,10 @@ export default function SignupPage() {
   };
 
   const handleGoogle = async () => {
+    if (inAppBrowser) {
+      setError("카카오톡·인스타그램 등 앱 내 브라우저에서는 Google 로그인을 사용할 수 없습니다. 우측 하단 ··· 메뉴에서 '브라우저에서 열기'를 선택해주세요.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -105,6 +124,18 @@ export default function SignupPage() {
           <h1 className="cafe-sign-title text-3xl text-[#FCF5E5]">Coffee Atlas</h1>
           <p className="cormorant text-[#FCF5E5]/40 text-lg">나만의 커피 여정을 시작해보세요.</p>
         </div>
+
+        {/* 인앱 브라우저 안내 배너 */}
+        {inAppBrowser && (
+          <div className="flex items-start gap-3 bg-amber-500/15 border border-amber-500/30 rounded-xl px-4 py-3">
+            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-amber-300 text-sm leading-relaxed">
+              현재 앱 내 브라우저에서 열려 있습니다.<br />
+              Google 로그인은 <strong>Chrome 또는 Safari</strong>에서만 사용 가능합니다.<br />
+              <span className="text-amber-400/70 text-xs">우측 하단 ··· 메뉴 → &apos;브라우저에서 열기&apos; 선택</span>
+            </p>
+          </div>
+        )}
 
         {/* Card */}
         <div className="sign-frame rounded-2xl p-8 space-y-5">
@@ -184,7 +215,7 @@ export default function SignupPage() {
             </div>
 
             {error && (
-              <p className="text-red-400 text-sm text-center bg-red-400/10 rounded-lg py-2.5 px-4 border border-red-400/20">
+              <p className="text-amber-300 text-sm text-center bg-amber-400/10 rounded-lg py-2.5 px-4 border border-amber-400/20 leading-relaxed">
                 {error}
               </p>
             )}
