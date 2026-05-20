@@ -410,15 +410,15 @@ export default function RecordDetail() {
                             <>
                                 <button
                                     onClick={() => setIsEditing(true)}
-                                    className="flex-1 bg-[#4d443e] text-white py-5 rounded-xl font-bold hover:bg-[#3d3632] transition-all flex items-center justify-center gap-2 text-lg"
+                                    className="flex-1 bg-[#4d443e] text-white py-3 rounded-xl font-bold hover:bg-[#3d3632] transition-all flex items-center justify-center gap-1.5 text-xs"
                                 >
-                                    <Edit2 size={20} /> 기록 수정하기
+                                    <Edit2 size={13} /> 기록 수정하기
                                 </button>
                                 <button
                                     onClick={handleDelete}
-                                    className="flex-1 bg-[#53585f] text-white py-5 rounded-xl font-bold hover:bg-[#43484f] transition-all flex items-center justify-center gap-2 text-lg"
+                                    className="flex-1 bg-[#53585f] text-white py-3 rounded-xl font-bold hover:bg-[#43484f] transition-all flex items-center justify-center gap-1.5 text-xs"
                                 >
-                                    <Trash2 size={20} /> 삭제하기
+                                    <Trash2 size={13} /> 삭제하기
                                 </button>
                             </>
                         )}

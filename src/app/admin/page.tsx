@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, onValue, remove } from "firebase/database";
+import { ref, onValue, remove, get, update } from "firebase/database";
 import {
   Home, Shield, Users, Coffee, Plus, Trash2,
-  Mail, Calendar, ChevronRight,
+  Mail, Calendar, ChevronRight, Wrench,
 } from "lucide-react";
 
 const ADMIN_EMAIL = "doin25@gmail.com";
@@ -39,10 +39,13 @@ export default function AdminPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [isAdmin, setIsAdmin]         = useState(false);
+  const [adminUid, setAdminUid]       = useState("");
   const [users, setUsers]             = useState<UserRecord[]>([]);
   const [cafes, setCafes]             = useState<ExpertCafe[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [cafesLoading, setCafesLoading] = useState(true);
+  const [orphanRecords, setOrphanRecords] = useState<{ id: string; name: string }[]>([]);
+  const [fixLoading, setFixLoading]   = useState(false);
 
   /* ── 관리자 인증 확인 ── */
   useEffect(() => {
@@ -51,6 +54,7 @@ export default function AdminPage() {
         router.replace("/");
         return;
       }
+      setAdminUid(u.uid);
       setIsAdmin(true);
       setAuthChecked(true);
     });
@@ -81,6 +85,17 @@ export default function AdminPage() {
       setCafesLoading(false);
     });
 
+    // uid 없는 레코드 조회
+    get(ref(db, "records")).then((snap) => {
+      if (!snap.exists()) return;
+      const list: { id: string; name: string }[] = [];
+      snap.forEach((child) => {
+        const val = child.val();
+        if (!val.uid) list.push({ id: child.key!, name: val.name || "(이름 없음)" });
+      });
+      setOrphanRecords(list);
+    });
+
     return () => { unsubUsers(); unsubCafes(); };
   }, [isAdmin]);
 
@@ -92,6 +107,23 @@ export default function AdminPage() {
   const deleteCafe = async (id: string) => {
     if (!confirm("이 카페를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.")) return;
     await remove(ref(db, `expertCafes/${id}`));
+  };
+
+  const fixOrphanRecords = async () => {
+    if (orphanRecords.length === 0) return;
+    if (!confirm(`uid가 없는 기록 ${orphanRecords.length}개를 현재 관리자 계정(${ADMIN_EMAIL})으로 귀속시키겠습니까?`)) return;
+    setFixLoading(true);
+    try {
+      await Promise.all(
+        orphanRecords.map((r) => update(ref(db, `records/${r.id}`), { uid: adminUid }))
+      );
+      setOrphanRecords([]);
+      alert("완료되었습니다. 새로고침 후 나의 카페 스토리에서 확인하세요.");
+    } catch {
+      alert("처리 중 오류가 발생했습니다.");
+    } finally {
+      setFixLoading(false);
+    }
   };
 
   /* ── 로딩 / 인증 대기 ── */
@@ -305,6 +337,38 @@ export default function AdminPage() {
             </div>
           )}
         </section>
+
+        {/* ── 데이터 복구 ── */}
+        {orphanRecords.length > 0 && (
+          <section className="space-y-5">
+            <h2 className="playfair text-2xl font-bold text-[#FCF5E5] flex items-center gap-2">
+              <Wrench size={22} className="text-[#D4AF37]" />
+              데이터 복구
+            </h2>
+            <div className="sign-frame rounded-2xl p-6 space-y-4">
+              <p className="cormorant text-[#FCF5E5]/60 text-base">
+                uid가 없는 기록 <span className="text-[#D4AF37] font-bold">{orphanRecords.length}개</span>가 발견됐습니다.
+                이 기록들은 uid 기반 필터링 도입 이전에 등록된 항목으로, &quot;나의 카페 스토리&quot;에 표시되지 않습니다.
+              </p>
+              <div className="space-y-2">
+                {orphanRecords.map((r) => (
+                  <div key={r.id} className="flex items-center gap-3 cormorant text-[#FCF5E5]/50 text-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]/40 flex-shrink-0" />
+                    {r.name}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={fixOrphanRecords}
+                disabled={fixLoading}
+                className={`flex items-center gap-2 bg-[#D4AF37] text-[#1a0f0a] px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#e8c84a] transition-all playfair shadow-lg ${fixLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <Wrench size={15} />
+                {fixLoading ? "처리 중..." : `${ADMIN_EMAIL} 계정으로 귀속시키기`}
+              </button>
+            </div>
+          </section>
+        )}
 
       </div>
 

@@ -96,6 +96,30 @@ export default function ReputationPage() {
     return rated.length ? +(rated.reduce((s, o) => s + o.rating, 0) / rated.length).toFixed(1) : 0;
   }, [orders]);
 
+  const regionStats = useMemo(() => {
+    if (!regionFilter) return null;
+    const inRegion = cafeSummaries.filter(c =>
+      regionFilter === "미분류" ? !c.region : c.region === regionFilter
+    );
+    const regionRecordIds = new Set(
+      records
+        .filter(r => regionFilter === "미분류" ? !r.region : r.region === regionFilter)
+        .map(r => r.id)
+    );
+    const regionVisitIds = new Set(
+      visits.filter(v => regionRecordIds.has(v.record_id)).map(v => v.id)
+    );
+    const regionOrders = orders.filter(o => regionVisitIds.has(o.visit_id) && o.rating);
+    const avgRating = regionOrders.length
+      ? +(regionOrders.reduce((s, o) => s + o.rating, 0) / regionOrders.length).toFixed(1)
+      : 0;
+    return {
+      cafeCount: inRegion.length,
+      visitCount: inRegion.reduce((sum, c) => sum + c.visitCount, 0),
+      avgRating,
+    };
+  }, [regionFilter, cafeSummaries, records, visits, orders]);
+
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
     let list = cafeSummaries.filter(c => {
@@ -143,11 +167,11 @@ export default function ReputationPage() {
 
         {/* Stats */}
         {!loading && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {[
-              { icon: <Coffee size={18} />,   label: "등록된 카페",   value: cafeSummaries.length, unit: "곳" },
-              { icon: <Calendar size={18} />, label: "총 방문 기록",  value: visits.length,        unit: "회" },
-              { icon: <Star size={18} />,     label: "평균 커피 평점", value: globalAvg || "-",    unit: globalAvg ? "점" : "" },
+              { icon: <Coffee size={18} />,   label: "등록된 카페",   value: regionStats ? regionStats.cafeCount : cafeSummaries.length, unit: "곳" },
+              { icon: <Calendar size={18} />, label: "총 방문 기록",  value: regionStats ? regionStats.visitCount : visits.length,        unit: "회" },
+              { icon: <Star size={18} />,     label: "평균 커피 평점", value: (regionStats ? regionStats.avgRating : globalAvg) || "-",    unit: (regionStats ? regionStats.avgRating : globalAvg) ? "점" : "" },
             ].map((s, i) => (
               <div key={i} className="border border-[#D4AF37]/20 rounded-2xl p-5 bg-[#1a0f0a]/40 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center flex-shrink-0">

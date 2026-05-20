@@ -69,7 +69,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <section className="w-full max-w-6xl px-6 py-24 flex flex-col items-center text-center space-y-10">
+      <section className="w-full max-w-6xl px-6 pt-12 pb-24 flex flex-col items-center text-center space-y-10">
 
         {/* Logo */}
         <img
