@@ -32,6 +32,8 @@ function getAuthErrorMsg(code: string): string {
     "auth/popup-blocked":           "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.",
     "auth/popup-closed-by-user":    "",
     "auth/cancelled-popup-request": "",
+    "auth/account-exists-with-different-credential":
+      "이 이메일로 이미 가입된 계정이 있습니다. 로그인 페이지에서 이메일로 로그인해주세요.",
   };
   return map[code] ?? "회원가입 중 오류가 발생했습니다.";
 }

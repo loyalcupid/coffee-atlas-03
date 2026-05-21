@@ -7,6 +7,7 @@ import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home, AlertTriangle } from "lucide-react";
@@ -21,17 +22,25 @@ function detectInAppBrowser(): boolean {
   );
 }
 
+// 비밀번호 오류 계열 코드 — 재설정 안내를 함께 표시할 때 사용
+const PASSWORD_ERROR_CODES = new Set([
+  "auth/wrong-password",
+  "auth/invalid-credential",
+]);
+
 function getAuthErrorMsg(code: string): string {
   const map: Record<string, string> = {
-    "auth/invalid-credential":      "이메일 또는 비밀번호가 올바르지 않습니다.",
-    "auth/user-not-found":          "등록되지 않은 이메일입니다.",
-    "auth/wrong-password":          "비밀번호가 올바르지 않습니다.",
-    "auth/invalid-email":           "유효하지 않은 이메일 형식입니다.",
-    "auth/too-many-requests":       "잠시 후 다시 시도해주세요.",
-    "auth/network-request-failed":  "네트워크 오류가 발생했습니다.",
-    "auth/popup-blocked":           "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.",
-    "auth/popup-closed-by-user":    "",
-    "auth/cancelled-popup-request": "",
+    "auth/invalid-credential":                    "이메일 또는 비밀번호가 올바르지 않습니다.",
+    "auth/user-not-found":                        "등록되지 않은 이메일입니다.",
+    "auth/wrong-password":                        "비밀번호가 올바르지 않습니다.",
+    "auth/invalid-email":                         "유효하지 않은 이메일 형식입니다.",
+    "auth/too-many-requests":                     "잠시 후 다시 시도해주세요.",
+    "auth/network-request-failed":                "네트워크 오류가 발생했습니다.",
+    "auth/popup-blocked":                         "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.",
+    "auth/popup-closed-by-user":                  "",
+    "auth/cancelled-popup-request":               "",
+    "auth/account-exists-with-different-credential":
+      "이 이메일로 이미 가입된 계정이 있습니다. 이메일로 로그인하거나 아래에서 비밀번호를 재설정해주세요.",
   };
   return map[code] ?? "로그인 중 오류가 발생했습니다.";
 }
@@ -45,6 +54,8 @@ function LoginForm() {
   const [error, setError]               = useState("");
   const [loading, setLoading]           = useState(false);
   const [inAppBrowser, setInAppBrowser] = useState(false);
+  const [showResetHint, setShowResetHint] = useState(false);
+  const [resetSent, setResetSent]         = useState(false);
 
   useEffect(() => {
     setInAppBrowser(detectInAppBrowser());
@@ -53,6 +64,8 @@ function LoginForm() {
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setShowResetHint(false);
+    setResetSent(false);
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -72,8 +85,34 @@ function LoginForm() {
       }
       router.push(redirectTo);
     } catch (err: unknown) {
-      const msg = getAuthErrorMsg((err as { code: string }).code);
+      const code = (err as { code: string }).code;
+      const msg = getAuthErrorMsg(code);
       if (msg) setError(msg);
+      // 비밀번호 오류 시 재설정 안내 표시
+      if (PASSWORD_ERROR_CODES.has(code)) setShowResetHint(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("이메일을 입력한 후 비밀번호 재설정을 눌러주세요.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setResetSent(true);
+      setShowResetHint(false);
+    } catch (err: unknown) {
+      const code = (err as { code: string }).code;
+      setError(
+        code === "auth/user-not-found"
+          ? "등록되지 않은 이메일입니다."
+          : "재설정 이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }
@@ -201,6 +240,30 @@ function LoginForm() {
               </p>
             )}
 
+            {/* 비밀번호 재설정 안내 */}
+            {showResetHint && !resetSent && (
+              <div className="bg-[#D4AF37]/8 border border-[#D4AF37]/20 rounded-xl px-4 py-3 space-y-2">
+                <p className="text-[#FCF5E5]/60 text-xs leading-relaxed">
+                  구글 계정과 연결된 이메일인 경우 비밀번호가 초기화되어 있을 수 있습니다.<br />
+                  비밀번호 재설정 이메일을 받아 새 비밀번호를 설정하세요.
+                </p>
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={loading}
+                  className="text-[#D4AF37] text-xs font-semibold hover:text-[#e8c84a] transition-colors disabled:opacity-50"
+                >
+                  {email ? `${email}로 재설정 이메일 보내기 →` : "비밀번호 재설정 이메일 받기 →"}
+                </button>
+              </div>
+            )}
+
+            {resetSent && (
+              <p className="text-emerald-400 text-sm text-center bg-emerald-400/10 rounded-lg py-2.5 px-4 border border-emerald-400/20">
+                재설정 이메일을 발송했습니다. 메일함을 확인해주세요.
+              </p>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -209,6 +272,20 @@ function LoginForm() {
               <LogIn size={16} /> {loading ? "로그인 중..." : "이메일로 로그인"}
             </button>
           </form>
+
+          {/* 항상 표시되는 비밀번호 찾기 링크 */}
+          {!showResetHint && !resetSent && (
+            <p className="text-center cormorant text-[#FCF5E5]/25 text-sm">
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                disabled={loading}
+                className="hover:text-[#FCF5E5]/50 transition-colors disabled:opacity-50"
+              >
+                비밀번호를 잊으셨나요?
+              </button>
+            </p>
+          )}
 
           <p className="text-center cormorant text-[#FCF5E5]/35 text-base">
             계정이 없으신가요?{" "}
