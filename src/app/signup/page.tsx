@@ -7,9 +7,6 @@ import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
@@ -25,11 +22,6 @@ function detectInAppBrowser(): boolean {
   );
 }
 
-function isMobileBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
 function getAuthErrorMsg(code: string): string {
   const map: Record<string, string> = {
     "auth/email-already-in-use":    "이미 사용 중인 이메일입니다.",
@@ -37,6 +29,7 @@ function getAuthErrorMsg(code: string): string {
     "auth/invalid-email":           "유효하지 않은 이메일 형식입니다.",
     "auth/too-many-requests":       "잠시 후 다시 시도해주세요.",
     "auth/network-request-failed":  "네트워크 오류가 발생했습니다.",
+    "auth/popup-blocked":           "팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.",
     "auth/popup-closed-by-user":    "",
     "auth/cancelled-popup-request": "",
   };
@@ -55,57 +48,6 @@ export default function SignupPage() {
 
   useEffect(() => {
     setInAppBrowser(detectInAppBrowser());
-  }, []);
-
-  // 모바일 redirect 회원가입 완료 후 결과 처리
-  useEffect(() => {
-    let redirectHandled = false;
-    let authUnsub: (() => void) | null = null;
-
-    const doRedirect = () => {
-      if (redirectHandled) return;
-      redirectHandled = true;
-      router.replace("/");
-    };
-
-    getRedirectResult(auth)
-      .then(async (cred) => {
-        if (cred) {
-          setLoading(true);
-          const u = cred.user;
-          const userRef = ref(db, `users/${u.uid}`);
-          const snap = await get(userRef);
-          if (!snap.exists()) {
-            await set(userRef, {
-              email: u.email,
-              displayName: u.displayName,
-              provider: "google.com",
-              createdAt: Date.now(),
-              lastLogin: Date.now(),
-            });
-          } else {
-            await update(userRef, { lastLogin: Date.now() });
-          }
-          doRedirect();
-        } else {
-          // 모바일 Chrome 서드파티 쿠키 이슈로 getRedirectResult가 null이어도
-          // Firebase가 auth 상태를 복원하면 onAuthStateChanged로 fallback
-          authUnsub = onAuthStateChanged(auth, (u) => {
-            if (u) doRedirect();
-          });
-        }
-      })
-      .catch((err: unknown) => {
-        const msg = getAuthErrorMsg((err as { code: string }).code);
-        if (msg) setError(msg);
-      })
-      .finally(() => setLoading(false));
-
-    return () => {
-      redirectHandled = true;
-      if (authUnsub) authUnsub();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleEmail = async (e: React.FormEvent) => {
@@ -142,30 +84,26 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      if (isMobileBrowser()) {
-        await signInWithRedirect(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const u = cred.user;
+      const userRef = ref(db, `users/${u.uid}`);
+      const snap = await get(userRef);
+      if (!snap.exists()) {
+        await set(userRef, {
+          email: u.email,
+          displayName: u.displayName,
+          provider: "google.com",
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+        });
       } else {
-        const cred = await signInWithPopup(auth, googleProvider);
-        const u = cred.user;
-        const userRef = ref(db, `users/${u.uid}`);
-        const snap = await get(userRef);
-        if (!snap.exists()) {
-          await set(userRef, {
-            email: u.email,
-            displayName: u.displayName,
-            provider: "google.com",
-            createdAt: Date.now(),
-            lastLogin: Date.now(),
-          });
-        } else {
-          await update(userRef, { lastLogin: Date.now() });
-        }
-        router.push("/");
-        setLoading(false);
+        await update(userRef, { lastLogin: Date.now() });
       }
+      router.push("/");
     } catch (err: unknown) {
       const msg = getAuthErrorMsg((err as { code: string }).code);
       if (msg) setError(msg);
+    } finally {
       setLoading(false);
     }
   };
