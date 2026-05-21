@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  onAuthStateChanged,
   updateProfile,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
@@ -56,33 +57,54 @@ export default function SignupPage() {
     setInAppBrowser(detectInAppBrowser());
   }, []);
 
-  // 모바일 redirect 로그인 완료 후 결과 처리
+  // 모바일 redirect 회원가입 완료 후 결과 처리
   useEffect(() => {
+    let redirectHandled = false;
+    let authUnsub: (() => void) | null = null;
+
+    const doRedirect = () => {
+      if (redirectHandled) return;
+      redirectHandled = true;
+      router.replace("/");
+    };
+
     getRedirectResult(auth)
       .then(async (cred) => {
-        if (!cred) return;
-        setLoading(true);
-        const u = cred.user;
-        const userRef = ref(db, `users/${u.uid}`);
-        const snap = await get(userRef);
-        if (!snap.exists()) {
-          await set(userRef, {
-            email: u.email,
-            displayName: u.displayName,
-            provider: "google.com",
-            createdAt: Date.now(),
-            lastLogin: Date.now(),
-          });
+        if (cred) {
+          setLoading(true);
+          const u = cred.user;
+          const userRef = ref(db, `users/${u.uid}`);
+          const snap = await get(userRef);
+          if (!snap.exists()) {
+            await set(userRef, {
+              email: u.email,
+              displayName: u.displayName,
+              provider: "google.com",
+              createdAt: Date.now(),
+              lastLogin: Date.now(),
+            });
+          } else {
+            await update(userRef, { lastLogin: Date.now() });
+          }
+          doRedirect();
         } else {
-          await update(userRef, { lastLogin: Date.now() });
+          // 모바일 Chrome 서드파티 쿠키 이슈로 getRedirectResult가 null이어도
+          // Firebase가 auth 상태를 복원하면 onAuthStateChanged로 fallback
+          authUnsub = onAuthStateChanged(auth, (u) => {
+            if (u) doRedirect();
+          });
         }
-        router.push("/");
       })
       .catch((err: unknown) => {
         const msg = getAuthErrorMsg((err as { code: string }).code);
         if (msg) setError(msg);
       })
       .finally(() => setLoading(false));
+
+    return () => {
+      redirectHandled = true;
+      if (authUnsub) authUnsub();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

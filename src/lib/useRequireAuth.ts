@@ -16,6 +16,7 @@ export function useRequireAuth() {
         setUser(u);
         setAuthLoading(false);
       } else {
+        setAuthLoading(false);
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       }
     });

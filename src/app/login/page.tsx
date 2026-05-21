@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { ref, get, set, update } from "firebase/database";
 import { Coffee, Mail, Lock, LogIn, Home, AlertTriangle } from "lucide-react";
@@ -59,33 +60,57 @@ function LoginForm() {
 
   // 모바일 redirect 로그인 완료 후 결과 처리
   useEffect(() => {
+    let redirectHandled = false;
+    let authUnsub: (() => void) | null = null;
+
+    const doRedirect = (uid?: string) => {
+      if (redirectHandled) return;
+      redirectHandled = true;
+      void uid; // DB 업데이트는 getRedirectResult 경로에서만 처리
+      const saved = sessionStorage.getItem("googleLoginRedirect") || redirectTo;
+      sessionStorage.removeItem("googleLoginRedirect");
+      router.replace(saved);
+    };
+
     getRedirectResult(auth)
       .then(async (cred) => {
-        if (!cred) return;
-        setLoading(true);
-        const u = cred.user;
-        const userRef = ref(db, `users/${u.uid}`);
-        const snap = await get(userRef);
-        if (!snap.exists()) {
-          await set(userRef, {
-            email: u.email,
-            displayName: u.displayName,
-            provider: "google.com",
-            createdAt: Date.now(),
-            lastLogin: Date.now(),
-          });
+        if (cred) {
+          // 새 로그인: DB 업데이트 후 리다이렉트
+          setLoading(true);
+          const u = cred.user;
+          const userRef = ref(db, `users/${u.uid}`);
+          const snap = await get(userRef);
+          if (!snap.exists()) {
+            await set(userRef, {
+              email: u.email,
+              displayName: u.displayName,
+              provider: "google.com",
+              createdAt: Date.now(),
+              lastLogin: Date.now(),
+            });
+          } else {
+            await update(userRef, { lastLogin: Date.now() });
+          }
+          doRedirect(cred.user.uid);
         } else {
-          await update(userRef, { lastLogin: Date.now() });
+          // getRedirectResult가 null인 경우:
+          // 모바일 Chrome의 서드파티 쿠키 제한으로 redirect 상태가 소실되어도
+          // Firebase는 auth 상태를 복원하므로 onAuthStateChanged로 fallback
+          authUnsub = onAuthStateChanged(auth, (u) => {
+            if (u) doRedirect(u.uid);
+          });
         }
-        const saved = sessionStorage.getItem("googleLoginRedirect") || "/";
-        sessionStorage.removeItem("googleLoginRedirect");
-        router.push(saved);
       })
       .catch((err: unknown) => {
         const msg = getAuthErrorMsg((err as { code: string }).code);
         if (msg) setError(msg);
       })
       .finally(() => setLoading(false));
+
+    return () => {
+      redirectHandled = true;
+      if (authUnsub) authUnsub();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
