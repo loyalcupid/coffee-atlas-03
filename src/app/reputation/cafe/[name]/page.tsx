@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
-import { Home, Star, MapPin, ArrowLeft, Coffee, Users, Camera, FileText } from "lucide-react";
+import { Home, Star, MapPin, ArrowLeft, Coffee, Users, Camera, FileText, UtensilsCrossed } from "lucide-react";
 
 interface CafeRecord {
   id: string;
@@ -36,6 +36,16 @@ interface Order {
   memo?: string;
 }
 
+interface OtherItem {
+  id: string;
+  visit_id: string;
+  name: string;
+  price: number;
+  rating: number;
+  memo?: string;
+  images?: string[];
+}
+
 function CafeDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -45,14 +55,16 @@ function CafeDetailContent() {
   const [records, setRecords] = useState<CafeRecord[]>([]);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const [rSnap, vSnap, oSnap] = await Promise.all([
+      const [rSnap, vSnap, oSnap, otherSnap] = await Promise.all([
         get(ref(db, "records")),
         get(ref(db, "visits")),
         get(ref(db, "orders")),
+        get(ref(db, "other_items")),
       ]);
 
       const allRecords = snapToArray<CafeRecord>(rSnap);
@@ -67,10 +79,13 @@ function CafeDetailContent() {
       const visitIds = new Set(matchingVisits.map(v => v.id));
       const allOrders = snapToArray<Order>(oSnap);
       const matchingOrders = allOrders.filter(o => visitIds.has(o.visit_id));
+      const allOtherItems = snapToArray<OtherItem>(otherSnap);
+      const matchingOtherItems = allOtherItems.filter(o => visitIds.has(o.visit_id));
 
       setRecords(matchingRecords);
       setVisits(matchingVisits);
       setOrders(matchingOrders);
+      setOtherItems(matchingOtherItems);
       setLoading(false);
     };
     load();
@@ -97,6 +112,9 @@ function CafeDetailContent() {
 
   const ordersByVisit: Record<string, Order[]> = {};
   orders.forEach(o => { (ordersByVisit[o.visit_id] ??= []).push(o); });
+
+  const otherItemsByVisit: Record<string, OtherItem[]> = {};
+  otherItems.forEach(o => { (otherItemsByVisit[o.visit_id] ??= []).push(o); });
 
   const sortedRecords = [...records].sort((a, b) => {
     const aLatest = (visitsByRecord[a.id] || []).reduce((d, v) => (v.date > d ? v.date : d), "");
@@ -356,6 +374,68 @@ function CafeDetailContent() {
                                     {order.memo && (
                                       <p className="cormorant text-[#FCF5E5]/50 text-sm italic leading-relaxed">
                                         {order.memo}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 주문한 다른 메뉴 */}
+                  {recordVisits.some(v => (otherItemsByVisit[v.id] || []).length > 0) && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-1.5">
+                        <UtensilsCrossed size={13} className="text-[#D4AF37]/40" />
+                        <span className="cormorant text-[#D4AF37]/60 text-xs uppercase tracking-wider">주문한 다른 메뉴</span>
+                      </div>
+                      <div className="space-y-4 pl-5">
+                        {recordVisits.map(visit => {
+                          const visitOtherItems = otherItemsByVisit[visit.id] || [];
+                          if (visitOtherItems.length === 0) return null;
+                          return (
+                            <div key={visit.id} className="space-y-3">
+                              <span className="cormorant text-[#FCF5E5]/30 text-xs">{visit.date}</span>
+                              <div className="space-y-3">
+                                {visitOtherItems.map(item => (
+                                  <div key={item.id} className="border border-[#D4AF37]/10 rounded-xl p-4 bg-[#1a0f0a]/30 space-y-3">
+                                    <div className="flex items-center justify-between flex-wrap gap-2">
+                                      <span className="playfair text-[#FCF5E5] font-bold text-sm">{item.name}</span>
+                                      <div className="flex items-center gap-3">
+                                        {item.price > 0 && (
+                                          <span className="cormorant text-[#D4AF37]/60 text-sm">
+                                            ₩{item.price.toLocaleString()}
+                                          </span>
+                                        )}
+                                        <div className="flex items-center gap-0.5">
+                                          {[1,2,3,4,5].map(n => (
+                                            <Star key={n} size={11}
+                                              fill={item.rating >= n ? "#D4AF37" : "none"}
+                                              stroke="#D4AF37"
+                                              strokeWidth={1.5}
+                                            />
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {item.images && item.images.length > 0 && (
+                                      <div className="grid grid-cols-3 gap-2">
+                                        {item.images.map((img, i) => (
+                                          <div key={i} className="aspect-square rounded-lg overflow-hidden border border-[#D4AF37]/10">
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {item.memo && (
+                                      <p className="cormorant text-[#FCF5E5]/50 text-sm italic leading-relaxed">
+                                        {item.memo}
                                       </p>
                                     )}
                                   </div>

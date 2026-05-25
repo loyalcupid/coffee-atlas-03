@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Coffee, MapPin, Calendar, Star, Send, Home, Camera, Plus, Trash2 } from "lucide-react";
+import { Coffee, MapPin, Calendar, Star, Send, Home, Camera, Plus, Trash2, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, storage } from "@/lib/firebase";
@@ -19,6 +19,12 @@ interface CoffeeOrder {
     coffeeMemo: string;
 }
 
+interface OtherMenuItem {
+    name: string;
+    price: number | "";
+    rating: number;
+}
+
 const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
 
 const defaultCoffee = (): CoffeeOrder => ({
@@ -29,6 +35,12 @@ const defaultCoffee = (): CoffeeOrder => ({
     body: 3,
     sweetness: 3,
     coffeeMemo: "",
+});
+
+const defaultOtherMenu = (): OtherMenuItem => ({
+    name: "",
+    price: "",
+    rating: 3,
 });
 
 export default function AddRecord() {
@@ -43,6 +55,9 @@ export default function AddRecord() {
 
     // Coffee orders (multiple)
     const [coffeeOrders, setCoffeeOrders] = useState<CoffeeOrder[]>([defaultCoffee()]);
+
+    // Other menu items
+    const [otherMenuItems, setOtherMenuItems] = useState<OtherMenuItem[]>([]);
 
     // Atmosphere
     const [atmosphereImages, setAtmosphereImages] = useState<string[]>([]);
@@ -64,6 +79,16 @@ export default function AddRecord() {
     const removeCoffee = (index: number) => {
         if (coffeeOrders.length === 1) return;
         setCoffeeOrders(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateOtherMenu = (index: number, field: keyof OtherMenuItem, value: OtherMenuItem[keyof OtherMenuItem]) => {
+        setOtherMenuItems(prev => prev.map((o, i) => i === index ? { ...o, [field]: value } : o));
+    };
+
+    const addOtherMenu = () => setOtherMenuItems(prev => [...prev, defaultOtherMenu()]);
+
+    const removeOtherMenu = (index: number) => {
+        setOtherMenuItems(prev => prev.filter((_, i) => i !== index));
     };
 
     const totalPrice = coffeeOrders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
@@ -124,6 +149,19 @@ export default function AddRecord() {
                     memo: o.coffeeMemo,
                 })
             ));
+
+            if (otherMenuItems.length > 0) {
+                await Promise.all(otherMenuItems.filter(o => o.name.trim()).map(o =>
+                    push(dbRef(db, 'other_items'), {
+                        visit_id: visitRef.key,
+                        name: o.name.trim(),
+                        price: Number(o.price) || 0,
+                        rating: o.rating,
+                        memo: "",
+                        images: [],
+                    })
+                ));
+            }
 
             router.push('/records');
         } catch (err) {
@@ -258,6 +296,33 @@ export default function AddRecord() {
                                     </span>
                                     <span className="text-xl font-black text-coffee-brown">₩{totalPrice.toLocaleString()}</span>
                                 </div>
+                            )}
+                        </div>
+                    </FormSection>
+
+                    {/* ── SECTION 2-B: 주문한 다른 메뉴 ── */}
+                    <FormSection title="주문한 다른 메뉴">
+                        <div className="space-y-4">
+                            {otherMenuItems.map((item, index) => (
+                                <OtherMenuItemCard
+                                    key={index}
+                                    index={index}
+                                    item={item}
+                                    onChange={(field, value) => updateOtherMenu(index, field, value)}
+                                    onRemove={() => removeOtherMenu(index)}
+                                />
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addOtherMenu}
+                                className="w-full py-3 rounded-xl border-2 border-dashed border-orange-300/50 text-orange-400 hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50/30 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+                            >
+                                <Plus size={16} /> 다른 메뉴 추가하기
+                            </button>
+
+                            {otherMenuItems.length === 0 && (
+                                <p className="text-xs text-coffee-brown/30 text-center">케이크, 스콘, 샌드위치 등 커피 외 메뉴를 기록하세요</p>
                             )}
                         </div>
                     </FormSection>
@@ -417,6 +482,66 @@ function CoffeeOrderCard({
                     </span>
                 </div>
             )}
+        </div>
+    );
+}
+
+// ── OtherMenuItemCard ────────────────────────────────────────────────────────────
+
+function OtherMenuItemCard({
+    index,
+    item,
+    onChange,
+    onRemove,
+}: {
+    index: number;
+    item: OtherMenuItem;
+    onChange: (field: keyof OtherMenuItem, value: OtherMenuItem[keyof OtherMenuItem]) => void;
+    onRemove: () => void;
+}) {
+    return (
+        <div className="border border-orange-200/60 rounded-2xl p-5 space-y-4 bg-orange-50/20">
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-orange-400/70 uppercase tracking-widest flex items-center gap-1.5">
+                    <UtensilsCrossed size={13} /> 메뉴 {index + 1}
+                </span>
+                <button
+                    type="button"
+                    onClick={onRemove}
+                    className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
+                >
+                    <Trash2 size={15} />
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <FieldLabel icon={<UtensilsCrossed size={15} />} text="메뉴 이름" />
+                    <input
+                        type="text"
+                        placeholder="예: 스콘, 케이크, 샌드위치"
+                        value={item.name}
+                        onChange={e => onChange("name", e.target.value)}
+                        className={inputCls}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <FieldLabel icon={<span className="text-sm font-bold leading-none">₩</span>} text="가격" />
+                    <input
+                        type="number"
+                        placeholder="예: 6000"
+                        value={item.price}
+                        onChange={e => onChange("price", e.target.value === "" ? "" : Number(e.target.value))}
+                        min="0"
+                        className={inputCls}
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <p className="text-sm font-bold text-coffee-brown/60">메뉴 평점</p>
+                <StarPicker value={item.rating} onChange={v => onChange("rating", v)} activeClass="bg-orange-400 text-white" />
+            </div>
         </div>
     );
 }

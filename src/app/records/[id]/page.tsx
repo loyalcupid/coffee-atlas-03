@@ -425,8 +425,11 @@ export default function RecordDetail() {
                             </button>
                             {otherItems.length > 0 ? otherItems.map(item => (
                                 <div key={item.id} className="relative flex-shrink-0 group">
-                                    <div className="w-[160px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex flex-col gap-2 shadow-sm">
-                                        <span className="font-bold text-coffee-brown text-sm truncate leading-tight">
+                                    <Link
+                                        href={`/records/${params.id}/menu-items/${item.id}`}
+                                        className="flex w-[160px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 shadow-sm hover:border-orange-400 hover:shadow-md transition-all"
+                                    >
+                                        <span className="font-bold text-coffee-brown text-sm truncate leading-tight group-hover:text-orange-600">
                                             {item.name}
                                         </span>
                                         <div className="flex items-center justify-between text-xs">
@@ -439,7 +442,12 @@ export default function RecordDetail() {
                                                 <span className="font-bold text-coffee-brown/60">{item.rating}</span>
                                             </div>
                                         </div>
-                                    </div>
+                                        {item.images?.length > 0 && (
+                                            <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                    </Link>
                                     <button
                                         onClick={() => handleDeleteOtherMenu(item.id)}
                                         className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
