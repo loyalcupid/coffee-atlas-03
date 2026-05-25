@@ -23,91 +23,71 @@ interface OtherMenuItem {
     name: string;
     price: number | "";
     rating: number;
+    memo: string;
+    images: string[];
 }
 
 const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
 
 const defaultCoffee = (): CoffeeOrder => ({
-    drink: "",
-    price: "",
-    coffeeRating: 3,
-    acidity: 3,
-    body: 3,
-    sweetness: 3,
-    coffeeMemo: "",
+    drink: "", price: "", coffeeRating: 3, acidity: 3, body: 3, sweetness: 3, coffeeMemo: "",
 });
 
 const defaultOtherMenu = (): OtherMenuItem => ({
-    name: "",
-    price: "",
-    rating: 3,
+    name: "", price: "", rating: 3, memo: "", images: [],
 });
 
 export default function AddRecord() {
     const router = useRouter();
     const { user, authLoading } = useRequireAuth();
 
-    // Cafe info
     const [name, setName] = useState("");
     const [location, setLocation] = useState("");
     const [region, setRegion] = useState("");
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
 
-    // Coffee orders (multiple)
     const [coffeeOrders, setCoffeeOrders] = useState<CoffeeOrder[]>([defaultCoffee()]);
-
-    // Other menu items
     const [otherMenuItems, setOtherMenuItems] = useState<OtherMenuItem[]>([]);
 
-    // Atmosphere
     const [atmosphereImages, setAtmosphereImages] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Overall review
     const [cafeRating, setCafeRating] = useState(3);
     const [overallMemo, setOverallMemo] = useState("");
-
     const [loading, setLoading] = useState(false);
 
     const updateCoffee = (index: number, field: keyof CoffeeOrder, value: CoffeeOrder[keyof CoffeeOrder]) => {
         setCoffeeOrders(prev => prev.map((o, i) => i === index ? { ...o, [field]: value } : o));
     };
-
     const addCoffee = () => setCoffeeOrders(prev => [...prev, defaultCoffee()]);
-
     const removeCoffee = (index: number) => {
         if (coffeeOrders.length === 1) return;
         setCoffeeOrders(prev => prev.filter((_, i) => i !== index));
     };
 
-    const updateOtherMenu = (index: number, field: keyof OtherMenuItem, value: OtherMenuItem[keyof OtherMenuItem]) => {
+    const updateOtherMenu = (index: number, field: keyof OtherMenuItem, value: string | number | string[]) => {
         setOtherMenuItems(prev => prev.map((o, i) => i === index ? { ...o, [field]: value } : o));
     };
-
     const addOtherMenu = () => setOtherMenuItems(prev => [...prev, defaultOtherMenu()]);
-
-    const removeOtherMenu = (index: number) => {
-        setOtherMenuItems(prev => prev.filter((_, i) => i !== index));
-    };
+    const removeOtherMenu = (index: number) => setOtherMenuItems(prev => prev.filter((_, i) => i !== index));
 
     const totalPrice = coffeeOrders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAtmosphereUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (atmosphereImages.length >= 10) { alert('최대 10장까지 가능합니다.'); return; }
+        if (atmosphereImages.length >= 10) { alert("최대 10장까지 가능합니다."); return; }
         setUploadingImage(true);
         try {
-            const ext = file.name.split('.').pop();
+            const ext = file.name.split(".").pop();
             const path = `uploads/${user!.uid}/records/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
             const sRef = storageRef(storage, path);
             await uploadBytes(sRef, file);
-            const publicUrl = await getDownloadURL(sRef);
-            setAtmosphereImages(prev => [...prev, publicUrl]);
-        } catch (err) {
-            console.error(err);
-            alert('이미지 업로드에 실패했습니다.');
+            const url = await getDownloadURL(sRef);
+            setAtmosphereImages(prev => [...prev, url]);
+        } catch {
+            alert("이미지 업로드에 실패했습니다.");
         } finally {
             setUploadingImage(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -117,28 +97,26 @@ export default function AddRecord() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (coffeeOrders.some(o => !o.drink.trim())) {
-            alert('모든 커피의 이름을 입력해주세요.');
+            alert("모든 커피의 이름을 입력해주세요.");
             return;
         }
         setLoading(true);
         try {
-            const recordRef = await push(dbRef(db, 'records'), {
-                name,
-                location,
-                region,
+            const recordRef = await push(dbRef(db, "records"), {
+                name, location, region,
                 rating: cafeRating,
                 atmosphere_images: atmosphereImages,
                 overall_memo: overallMemo,
                 uid: user!.uid,
             });
 
-            const visitRef = await push(dbRef(db, 'visits'), {
+            const visitRef = await push(dbRef(db, "visits"), {
                 record_id: recordRef.key,
                 date,
             });
 
             await Promise.all(coffeeOrders.map(o =>
-                push(dbRef(db, 'orders'), {
+                push(dbRef(db, "orders"), {
                     visit_id: visitRef.key,
                     drink_name: o.drink,
                     price: Number(o.price) || 0,
@@ -151,22 +129,24 @@ export default function AddRecord() {
             ));
 
             if (otherMenuItems.length > 0) {
-                await Promise.all(otherMenuItems.filter(o => o.name.trim()).map(o =>
-                    push(dbRef(db, 'other_items'), {
-                        visit_id: visitRef.key,
-                        name: o.name.trim(),
-                        price: Number(o.price) || 0,
-                        rating: o.rating,
-                        memo: "",
-                        images: [],
-                    })
-                ));
+                await Promise.all(
+                    otherMenuItems.filter(o => o.name.trim()).map(o =>
+                        push(dbRef(db, "other_items"), {
+                            visit_id: visitRef.key,
+                            name: o.name.trim(),
+                            price: Number(o.price) || 0,
+                            rating: o.rating,
+                            memo: o.memo,
+                            images: o.images,
+                        })
+                    )
+                );
             }
 
-            router.push('/records');
+            router.push("/records");
         } catch (err) {
             console.error(err);
-            alert('기록 저장 중 오류가 발생했습니다.');
+            alert("기록 저장 중 오류가 발생했습니다.");
         } finally {
             setLoading(false);
         }
@@ -205,8 +185,8 @@ export default function AddRecord() {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            if (name) window.open(`https://map.naver.com/v5/search/${encodeURIComponent(name)}`, '_blank');
-                                            else alert('카페 이름을 입력해주세요.');
+                                            if (name) window.open(`https://map.naver.com/v5/search/${encodeURIComponent(name)}`, "_blank");
+                                            else alert("카페 이름을 입력해주세요.");
                                         }}
                                         className="text-xs text-blue-500 hover:underline flex items-center gap-1"
                                     >
@@ -261,7 +241,9 @@ export default function AddRecord() {
                                     ))}
                                 </div>
                                 {region && (
-                                    <p className="text-xs text-coffee-brown/40">선택된 지역: <span className="font-bold text-coffee-brown/60">{region}</span> · 다시 클릭하면 해제됩니다</p>
+                                    <p className="text-xs text-coffee-brown/40">
+                                        선택된 지역: <span className="font-bold text-coffee-brown/60">{region}</span> · 다시 클릭하면 해제됩니다
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -280,7 +262,6 @@ export default function AddRecord() {
                                     onRemove={() => removeCoffee(index)}
                                 />
                             ))}
-
                             <button
                                 type="button"
                                 onClick={addCoffee}
@@ -288,7 +269,6 @@ export default function AddRecord() {
                             >
                                 <Plus size={16} /> 커피 추가하기
                             </button>
-
                             {totalPrice > 0 && (
                                 <div className="flex items-center justify-between bg-coffee-brown/5 rounded-xl px-5 py-3">
                                     <span className="text-sm text-coffee-brown/60 font-medium">
@@ -308,11 +288,11 @@ export default function AddRecord() {
                                     key={index}
                                     index={index}
                                     item={item}
+                                    uid={user!.uid}
                                     onChange={(field, value) => updateOtherMenu(index, field, value)}
                                     onRemove={() => removeOtherMenu(index)}
                                 />
                             ))}
-
                             <button
                                 type="button"
                                 onClick={addOtherMenu}
@@ -320,9 +300,10 @@ export default function AddRecord() {
                             >
                                 <Plus size={16} /> 다른 메뉴 추가하기
                             </button>
-
                             {otherMenuItems.length === 0 && (
-                                <p className="text-xs text-coffee-brown/30 text-center">케이크, 스콘, 샌드위치 등 커피 외 메뉴를 기록하세요</p>
+                                <p className="text-xs text-coffee-brown/30 text-center">
+                                    케이크, 스콘, 샌드위치 등 커피 외 메뉴를 기록하세요
+                                </p>
                             )}
                         </div>
                     </FormSection>
@@ -347,20 +328,22 @@ export default function AddRecord() {
                                 >
                                     <Camera size={22} />
                                     <span className="text-[10px] text-center px-1 leading-tight">
-                                        {uploadingImage ? '업로드 중...' : '사진 추가'}
+                                        {uploadingImage ? "업로드 중..." : "사진 추가"}
                                     </span>
                                 </div>
                             )}
                         </div>
                         <p className="text-xs text-coffee-brown/30 mt-1">최대 10장 · 카페 분위기 사진을 추가하세요</p>
-                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleAtmosphereUpload} className="hidden" />
                     </FormSection>
 
                     {/* ── SECTION 4: 총평 ── */}
                     <FormSection title="총평">
                         <div className="space-y-5">
                             <div className="space-y-3">
-                                <p className="text-sm font-bold text-coffee-brown/60">총평점 <span className="font-normal text-xs text-coffee-brown/40">(카페 전체)</span></p>
+                                <p className="text-sm font-bold text-coffee-brown/60">
+                                    총평점 <span className="font-normal text-xs text-coffee-brown/40">(카페 전체)</span>
+                                </p>
                                 <StarPicker value={cafeRating} onChange={setCafeRating} activeClass="bg-yellow-400 text-yellow-900" />
                             </div>
                             <div className="space-y-2">
@@ -378,9 +361,9 @@ export default function AddRecord() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full bg-coffee-brown text-coffee-cream py-4 rounded-xl text-lg font-bold shadow-xl hover:bg-coffee-brown/90 transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        className={`w-full bg-coffee-brown text-coffee-cream py-4 rounded-xl text-lg font-bold shadow-xl hover:bg-coffee-brown/90 transition-all flex items-center justify-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                     >
-                        {loading ? '기록 중...' : <><Send size={20} /> 기록 완료하기</>}
+                        {loading ? "기록 중..." : <><Send size={20} /> 기록 완료하기</>}
                     </button>
                 </form>
             </div>
@@ -391,11 +374,7 @@ export default function AddRecord() {
 // ── CoffeeOrderCard ──────────────────────────────────────────────────────────────
 
 function CoffeeOrderCard({
-    index,
-    order,
-    total,
-    onChange,
-    onRemove,
+    index, order, total, onChange, onRemove,
 }: {
     index: number;
     order: CoffeeOrder;
@@ -405,24 +384,16 @@ function CoffeeOrderCard({
 }) {
     return (
         <div className="border border-coffee-brown/10 rounded-2xl p-5 space-y-5 bg-white/60">
-            {/* Card header */}
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest flex items-center gap-1.5">
                     <Coffee size={13} /> 커피 {index + 1}
                 </span>
                 {total > 1 && (
-                    <button
-                        type="button"
-                        onClick={onRemove}
-                        className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
-                        title="이 커피 삭제"
-                    >
+                    <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50">
                         <Trash2 size={15} />
                     </button>
                 )}
             </div>
-
-            {/* Name + Price */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <FieldLabel icon={<Coffee size={15} />} text="커피 이름" />
@@ -430,7 +401,7 @@ function CoffeeOrderCard({
                         type="text"
                         placeholder="예: 아이스 아메리카노"
                         value={order.drink}
-                        onChange={e => onChange('drink', e.target.value)}
+                        onChange={e => onChange("drink", e.target.value)}
                         className={inputCls}
                     />
                 </div>
@@ -440,41 +411,31 @@ function CoffeeOrderCard({
                         type="number"
                         placeholder="예: 5500"
                         value={order.price}
-                        onChange={e => onChange('price', e.target.value === "" ? "" : Number(e.target.value))}
+                        onChange={e => onChange("price", e.target.value === "" ? "" : Number(e.target.value))}
                         min="0"
                         className={inputCls}
                     />
                 </div>
             </div>
-
-            {/* Taste Profile */}
             <div className="space-y-4">
-                <p className="text-sm font-bold text-coffee-brown/60">
-                    맛 프로파일 <span className="font-normal text-xs text-coffee-brown/40">(1~5점)</span>
-                </p>
-                <RangeSlider label="산미 (Acidity)" value={order.acidity} onChange={v => onChange('acidity', v)} />
-                <RangeSlider label="바디감 (Body)" value={order.body} onChange={v => onChange('body', v)} />
-                <RangeSlider label="단맛 (Sweetness)" value={order.sweetness} onChange={v => onChange('sweetness', v)} />
+                <p className="text-sm font-bold text-coffee-brown/60">맛 프로파일 <span className="font-normal text-xs text-coffee-brown/40">(1~5점)</span></p>
+                <RangeSlider label="산미 (Acidity)" value={order.acidity} onChange={v => onChange("acidity", v)} />
+                <RangeSlider label="바디감 (Body)" value={order.body} onChange={v => onChange("body", v)} />
+                <RangeSlider label="단맛 (Sweetness)" value={order.sweetness} onChange={v => onChange("sweetness", v)} />
             </div>
-
-            {/* Coffee Rating */}
             <div className="space-y-3">
                 <p className="text-sm font-bold text-coffee-brown/60">커피 평점</p>
-                <StarPicker value={order.coffeeRating} onChange={v => onChange('coffeeRating', v)} activeClass="bg-coffee-accent text-coffee-brown" />
+                <StarPicker value={order.coffeeRating} onChange={v => onChange("coffeeRating", v)} activeClass="bg-coffee-accent text-coffee-brown" />
             </div>
-
-            {/* Coffee Memo */}
             <div className="space-y-2">
                 <p className="text-sm font-bold text-coffee-brown/60">커피 메모</p>
                 <textarea
                     placeholder="이 커피의 향, 맛, 느낌을 적어주세요."
                     value={order.coffeeMemo}
-                    onChange={e => onChange('coffeeMemo', e.target.value)}
+                    onChange={e => onChange("coffeeMemo", e.target.value)}
                     className="w-full h-24 px-4 py-3 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-coffee-brown/20 transition-all resize-none text-sm"
                 />
             </div>
-
-            {/* Per-coffee price badge */}
             {order.price !== "" && Number(order.price) > 0 && (
                 <div className="flex items-center justify-end">
                     <span className="text-sm font-bold text-coffee-brown bg-coffee-brown/8 px-3 py-1 rounded-lg">
@@ -489,31 +450,49 @@ function CoffeeOrderCard({
 // ── OtherMenuItemCard ────────────────────────────────────────────────────────────
 
 function OtherMenuItemCard({
-    index,
-    item,
-    onChange,
-    onRemove,
+    index, item, uid, onChange, onRemove,
 }: {
     index: number;
     item: OtherMenuItem;
-    onChange: (field: keyof OtherMenuItem, value: OtherMenuItem[keyof OtherMenuItem]) => void;
+    uid: string;
+    onChange: (field: keyof OtherMenuItem, value: string | number | string[]) => void;
     onRemove: () => void;
 }) {
+    const itemFileRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (item.images.length >= 5) { alert("사진은 최대 5장까지 가능합니다."); return; }
+        setUploading(true);
+        try {
+            const ext = file.name.split(".").pop();
+            const path = `uploads/${uid}/menu-items/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const sRef = storageRef(storage, path);
+            await uploadBytes(sRef, file);
+            const url = await getDownloadURL(sRef);
+            onChange("images", [...item.images, url]);
+        } catch {
+            alert("이미지 업로드에 실패했습니다.");
+        } finally {
+            setUploading(false);
+            if (itemFileRef.current) itemFileRef.current.value = "";
+        }
+    };
+
     return (
-        <div className="border border-orange-200/60 rounded-2xl p-5 space-y-4 bg-orange-50/20">
+        <div className="border border-orange-200/60 rounded-2xl p-5 space-y-5 bg-orange-50/20">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-orange-400/70 uppercase tracking-widest flex items-center gap-1.5">
                     <UtensilsCrossed size={13} /> 메뉴 {index + 1}
                 </span>
-                <button
-                    type="button"
-                    onClick={onRemove}
-                    className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50"
-                >
+                <button type="button" onClick={onRemove} className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-lg hover:bg-red-50">
                     <Trash2 size={15} />
                 </button>
             </div>
 
+            {/* Name + Price */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <FieldLabel icon={<UtensilsCrossed size={15} />} text="메뉴 이름" />
@@ -538,9 +517,51 @@ function OtherMenuItemCard({
                 </div>
             </div>
 
+            {/* Rating */}
             <div className="space-y-3">
                 <p className="text-sm font-bold text-coffee-brown/60">메뉴 평점</p>
                 <StarPicker value={item.rating} onChange={v => onChange("rating", v)} activeClass="bg-orange-400 text-white" />
+            </div>
+
+            {/* Photos */}
+            <div className="space-y-3">
+                <p className="text-sm font-bold text-coffee-brown/60">사진</p>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    {item.images.map((url, i) => (
+                        <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                                type="button"
+                                onClick={() => onChange("images", item.images.filter((_, idx) => idx !== i))}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                            >✕</button>
+                        </div>
+                    ))}
+                    {item.images.length < 5 && (
+                        <div
+                            onClick={() => itemFileRef.current?.click()}
+                            className="aspect-square bg-gray-50 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-gray-400"
+                        >
+                            <Camera size={18} />
+                            <span className="text-[9px] text-center px-1 leading-tight">
+                                {uploading ? "업로드 중..." : "사진 추가"}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <input type="file" accept="image/*" ref={itemFileRef} onChange={handleImageUpload} className="hidden" />
+                <p className="text-xs text-coffee-brown/30">최대 5장</p>
+            </div>
+
+            {/* Review */}
+            <div className="space-y-2">
+                <p className="text-sm font-bold text-coffee-brown/60">리뷰</p>
+                <textarea
+                    placeholder="메뉴의 맛과 느낌을 기록해보세요."
+                    value={item.memo}
+                    onChange={e => onChange("memo", e.target.value)}
+                    className="w-full h-24 px-4 py-3 rounded-xl border border-coffee-brown/10 bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 transition-all resize-none text-sm"
+                />
             </div>
         </div>
     );
@@ -575,7 +596,7 @@ function StarPicker({ value, onChange, activeClass }: { value: number; onChange:
                     key={s}
                     type="button"
                     onClick={() => onChange(s)}
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${value >= s ? `${activeClass} shadow-md scale-105` : 'bg-coffee-brown/5 text-coffee-brown/25 hover:bg-coffee-brown/10'}`}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${value >= s ? `${activeClass} shadow-md scale-105` : "bg-coffee-brown/5 text-coffee-brown/25 hover:bg-coffee-brown/10"}`}
                 >
                     <Star size={20} fill={value >= s ? "currentColor" : "none"} />
                 </button>
@@ -593,9 +614,7 @@ function RangeSlider({ label, value, onChange }: { label: string; value: number;
             </div>
             <input
                 type="range"
-                min="1"
-                max="5"
-                step="1"
+                min="1" max="5" step="1"
                 value={value}
                 onChange={e => onChange(parseInt(e.target.value))}
                 className="w-full h-2 bg-coffee-brown/10 rounded-lg appearance-none cursor-pointer accent-coffee-brown"
