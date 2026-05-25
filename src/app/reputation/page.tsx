@@ -294,7 +294,11 @@ export default function ReputationPage() {
         ) : (
           <div className="space-y-4">
             {filtered.map((cafe, i) => (
-              <div key={i} className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/40 transition-all">
+              <Link
+                key={i}
+                href={`/reputation/cafe/${encodeURIComponent(cafe.name)}?loc=${encodeURIComponent(cafe.location)}`}
+                className="block border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 hover:border-[#D4AF37]/40 transition-all"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className="flex-shrink-0 w-10 text-center">
@@ -315,40 +319,7 @@ export default function ReputationPage() {
                             </span>
                           )}
                         </div>
-                        {cafe.location && (
-                          <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/40 text-sm mt-0.5">
-                            <MapPin size={12} />{cafe.location}
-                          </div>
-                        )}
                       </div>
-
-                      {cafe.avgAcidity > 0 && (
-                        <div className="flex gap-4 flex-wrap">
-                          {[
-                            { label: "산미", val: cafe.avgAcidity,   color: "#7EC8E3" },
-                            { label: "바디", val: cafe.avgBody,      color: "#C8A97E" },
-                            { label: "단맛", val: cafe.avgSweetness, color: "#D4AF37" },
-                          ].map((t, ti) => (
-                            <div key={ti} className="flex items-center gap-2 min-w-[90px]">
-                              <span className="cormorant text-[#FCF5E5]/40 text-xs w-6">{t.label}</span>
-                              <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden w-16">
-                                <div className="h-full rounded-full" style={{ width: `${(t.val / 5) * 100}%`, backgroundColor: t.color }} />
-                              </div>
-                              <span className="cormorant text-[#FCF5E5]/50 text-xs">{t.val}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {cafe.topDrinks.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {cafe.topDrinks.map((d, di) => (
-                            <span key={di} className="cormorant text-xs bg-[#D4AF37]/10 text-[#D4AF37]/70 border border-[#D4AF37]/15 px-2.5 py-0.5 rounded-full">
-                              {d}
-                            </span>
-                          ))}
-                        </div>
-                      )}
 
                       {cafe.reviewers.length > 0 && (
                         <div className="flex items-center gap-1.5 cormorant text-[#FCF5E5]/30 text-xs">
@@ -377,7 +348,7 @@ export default function ReputationPage() {
                     <p className="cormorant text-[#FCF5E5]/35 text-sm">{cafe.visitCount}회 방문</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
