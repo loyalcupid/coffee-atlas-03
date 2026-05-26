@@ -417,7 +417,12 @@ export default function RecordDetail() {
                                             </div>
                                             {order.images?.length > 0 && (
                                                 <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                    <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={order.images[0]}
+                                                        alt=""
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        onClick={e => { e.preventDefault(); e.stopPropagation(); setLightboxUrl(order.images[0]); }}
+                                                    />
                                                 </div>
                                             )}
                                         </Link>
@@ -452,7 +457,12 @@ export default function RecordDetail() {
                                             </div>
                                             {order.images?.length > 0 && (
                                                 <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                    <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={order.images[0]}
+                                                        alt=""
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        onClick={() => setLightboxUrl(order.images[0])}
+                                                    />
                                                 </div>
                                             )}
                                         </div>
@@ -513,7 +523,12 @@ export default function RecordDetail() {
                                             </div>
                                             {item.images?.length > 0 && (
                                                 <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                    <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={item.images[0]}
+                                                        alt=""
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        onClick={e => { e.preventDefault(); e.stopPropagation(); setLightboxUrl(item.images[0]); }}
+                                                    />
                                                 </div>
                                             )}
                                         </Link>
@@ -534,7 +549,12 @@ export default function RecordDetail() {
                                             </div>
                                             {item.images?.length > 0 && (
                                                 <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                    <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={item.images[0]}
+                                                        alt=""
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        onClick={() => setLightboxUrl(item.images[0])}
+                                                    />
                                                 </div>
                                             )}
                                         </div>

@@ -17,7 +17,7 @@ export function PhotoLightbox({ url, onClose }: { url: string; onClose: () => vo
             <img
                 src={url}
                 alt=""
-                className="max-w-[33vw] max-h-[33vh] object-contain rounded-xl shadow-2xl ring-1 ring-white/10"
+                className="max-w-[80vw] max-h-[80vh] object-contain rounded-xl shadow-2xl ring-1 ring-white/10"
                 onClick={e => e.stopPropagation()}
             />
         </div>
