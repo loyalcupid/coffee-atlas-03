@@ -86,6 +86,22 @@ body {
   background: linear-gradient(90deg, transparent, #D4AF37, transparent);
 }
 
+/* Brown ornamental divider (features section) */
+.brown-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #5C3A25;
+}
+
+.brown-divider::before,
+.brown-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #5C3A25, transparent);
+}
+
 /* Sign frame */
 .sign-frame {
   border: 1px solid rgba(212, 175, 55, 0.5);
