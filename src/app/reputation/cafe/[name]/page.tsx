@@ -6,6 +6,7 @@ import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
 import { Home, Star, MapPin, ArrowLeft, Coffee, Users, Camera, FileText, UtensilsCrossed } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 
 interface CafeRecord {
   id: string;
@@ -58,6 +59,7 @@ function CafeDetailContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [otherItems, setOtherItems] = useState<OtherItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -310,7 +312,12 @@ function CafeDetailContent() {
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pl-5">
                         {(record.atmosphere_images || []).map((img, i) => (
                           <div key={i} className="aspect-square rounded-xl overflow-hidden border border-[#D4AF37]/10">
-                            <img src={img} alt="" className="w-full h-full object-cover" />
+                            <img
+                              src={img}
+                              alt=""
+                              className="w-full h-full object-cover cursor-pointer"
+                              onClick={() => setLightboxUrl(img)}
+                            />
                           </div>
                         ))}
                       </div>
@@ -376,7 +383,12 @@ function CafeDetailContent() {
                                       <div className="grid grid-cols-3 gap-2">
                                         {order.images.map((img, i) => (
                                           <div key={i} className="aspect-square rounded-lg overflow-hidden border border-[#D4AF37]/10">
-                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                            <img
+                                              src={img}
+                                              alt=""
+                                              className="w-full h-full object-cover cursor-pointer"
+                                              onClick={() => setLightboxUrl(img)}
+                                            />
                                           </div>
                                         ))}
                                       </div>
@@ -438,7 +450,12 @@ function CafeDetailContent() {
                                       <div className="grid grid-cols-3 gap-2">
                                         {item.images.map((img, i) => (
                                           <div key={i} className="aspect-square rounded-lg overflow-hidden border border-[#D4AF37]/10">
-                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                            <img
+                                              src={img}
+                                              alt=""
+                                              className="w-full h-full object-cover cursor-pointer"
+                                              onClick={() => setLightboxUrl(img)}
+                                            />
                                           </div>
                                         ))}
                                       </div>
@@ -464,6 +481,8 @@ function CafeDetailContent() {
           </div>
         )}
       </div>
+
+      {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
 
       <footer className="w-full py-8 text-center border-t border-[#D4AF37]/15 mt-8">
         <p className="cormorant text-[#FCF5E5]/25 tracking-widest text-sm uppercase">

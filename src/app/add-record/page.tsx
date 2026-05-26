@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Coffee, MapPin, Calendar, Star, Send, Home, Camera, Plus, Trash2, UtensilsCrossed } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db, storage } from "@/lib/firebase";
@@ -53,6 +54,7 @@ export default function AddRecord() {
     const [atmosphereImages, setAtmosphereImages] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     const [cafeRating, setCafeRating] = useState(3);
     const [overallMemo, setOverallMemo] = useState("");
@@ -261,6 +263,7 @@ export default function AddRecord() {
                                     order={order}
                                     total={coffeeOrders.length}
                                     uid={user!.uid}
+                                    onLightbox={url => setLightboxUrl(url)}
                                     onChange={(field, value) => updateCoffee(index, field, value)}
                                     onRemove={() => removeCoffee(index)}
                                 />
@@ -292,6 +295,7 @@ export default function AddRecord() {
                                     index={index}
                                     item={item}
                                     uid={user!.uid}
+                                    onLightbox={url => setLightboxUrl(url)}
                                     onChange={(field, value) => updateOtherMenu(index, field, value)}
                                     onRemove={() => removeOtherMenu(index)}
                                 />
@@ -316,7 +320,12 @@ export default function AddRecord() {
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                             {atmosphereImages.map((url, i) => (
                                 <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
-                                    <img src={url} alt={`분위기 ${i + 1}`} className="w-full h-full object-cover" />
+                                    <img
+                                        src={url}
+                                        alt={`분위기 ${i + 1}`}
+                                        className="w-full h-full object-cover cursor-pointer"
+                                        onClick={() => setLightboxUrl(url)}
+                                    />
                                     <button
                                         type="button"
                                         onClick={() => setAtmosphereImages(p => p.filter((_, idx) => idx !== i))}
@@ -361,6 +370,8 @@ export default function AddRecord() {
                         </div>
                     </FormSection>
 
+                    {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
+
                     <button
                         type="submit"
                         disabled={loading}
@@ -377,12 +388,13 @@ export default function AddRecord() {
 // ── CoffeeOrderCard ──────────────────────────────────────────────────────────────
 
 function CoffeeOrderCard({
-    index, order, total, uid, onChange, onRemove,
+    index, order, total, uid, onLightbox, onChange, onRemove,
 }: {
     index: number;
     order: CoffeeOrder;
     total: number;
     uid: string;
+    onLightbox: (url: string) => void;
     onChange: (field: keyof CoffeeOrder, value: CoffeeOrder[keyof CoffeeOrder]) => void;
     onRemove: () => void;
 }) {
@@ -459,7 +471,12 @@ function CoffeeOrderCard({
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                     {order.images.map((url, i) => (
                         <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <img
+                                src={url}
+                                alt=""
+                                className="w-full h-full object-cover cursor-pointer"
+                                onClick={() => onLightbox(url)}
+                            />
                             <button
                                 type="button"
                                 onClick={() => onChange("images", order.images.filter((_, idx) => idx !== i))}
@@ -505,11 +522,12 @@ function CoffeeOrderCard({
 // ── OtherMenuItemCard ────────────────────────────────────────────────────────────
 
 function OtherMenuItemCard({
-    index, item, uid, onChange, onRemove,
+    index, item, uid, onLightbox, onChange, onRemove,
 }: {
     index: number;
     item: OtherMenuItem;
     uid: string;
+    onLightbox: (url: string) => void;
     onChange: (field: keyof OtherMenuItem, value: string | number | string[]) => void;
     onRemove: () => void;
 }) {
@@ -584,7 +602,12 @@ function OtherMenuItemCard({
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                     {item.images.map((url, i) => (
                         <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <img
+                                src={url}
+                                alt=""
+                                className="w-full h-full object-cover cursor-pointer"
+                                onClick={() => onLightbox(url)}
+                            />
                             <button
                                 type="button"
                                 onClick={() => onChange("images", item.images.filter((_, idx) => idx !== i))}

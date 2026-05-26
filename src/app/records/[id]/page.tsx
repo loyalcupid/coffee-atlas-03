@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Coffee, MapPin, Calendar, Star, Edit2, Home, ArrowLeft, Trash2, Camera, UtensilsCrossed, X } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import Link from "next/link";
 import { db, storage, snapToArray } from "@/lib/firebase";
 import { ref as dbRef, get, push, update, remove } from "firebase/database";
@@ -30,6 +31,7 @@ export default function RecordDetail() {
 
     const [uploadingImage, setUploadingImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     // Modal states
     const [showDateModal, setShowDateModal] = useState(false);
@@ -560,7 +562,12 @@ export default function RecordDetail() {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                             {atmosphereImages.map((imgUrl, index) => (
                                 <div key={index} className="aspect-square rounded-xl border border-gray-200 overflow-hidden relative shadow-sm group">
-                                    <img src={imgUrl} alt={`분위기 ${index}`} className="w-full h-full object-cover" />
+                                    <img
+                                        src={imgUrl}
+                                        alt={`분위기 ${index}`}
+                                        className="w-full h-full object-cover cursor-pointer"
+                                        onClick={() => setLightboxUrl(imgUrl)}
+                                    />
                                     {isEditing && (
                                         <button
                                             onClick={() => handleDeleteAtmosphereImage(index)}
@@ -777,6 +784,8 @@ export default function RecordDetail() {
             )}
 
             {/* ── 삭제 확인 모달 ── */}
+            {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
+
             {confirmModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl p-6 shadow-2xl w-full max-w-sm space-y-5">

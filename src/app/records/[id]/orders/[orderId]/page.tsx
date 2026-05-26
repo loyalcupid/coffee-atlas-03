@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Star, Save, Home, Camera } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 import Link from "next/link";
 import { db, storage } from "@/lib/firebase";
 import { ref, get, update } from "firebase/database";
@@ -27,6 +28,7 @@ export default function OrderDetail() {
     const [images, setImages] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -205,7 +207,12 @@ export default function OrderDetail() {
                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                             {images.map((url, i) => (
                                 <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
-                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                    <img
+                                        src={url}
+                                        alt=""
+                                        className="w-full h-full object-cover cursor-pointer"
+                                        onClick={() => setLightboxUrl(url)}
+                                    />
                                     <button
                                         onClick={() => handleRemoveImage(i)}
                                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
@@ -256,6 +263,7 @@ export default function OrderDetail() {
                     </div>
                 </div>
             </div>
+            {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
         </div>
     );
 }
