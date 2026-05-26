@@ -191,6 +191,12 @@ export default function RecordDetail() {
         }
     };
 
+    const handleDeleteAtmosphereImage = async (index: number) => {
+        const newImages = atmosphereImages.filter((_, i) => i !== index);
+        await update(dbRef(db, `records/${params.id}`), { atmosphere_images: newImages });
+        setAtmosphereImages(newImages);
+    };
+
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -322,12 +328,14 @@ export default function RecordDetail() {
                     <div className="space-y-3">
                         <SectionLabel icon={<Calendar size={15} />} text="방문 날짜" />
                         <div className="flex gap-3 border-2 border-blue-200/60 rounded-2xl p-4 bg-blue-50/30 flex-wrap min-h-[80px] items-start content-start">
-                            <button
-                                onClick={handleAddVisit}
-                                className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
-                            >
-                                <span>+ 날짜 추가</span>
-                            </button>
+                            {isEditing && (
+                                <button
+                                    onClick={handleAddVisit}
+                                    className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
+                                >
+                                    <span>+ 날짜 추가</span>
+                                </button>
+                            )}
                             {visits.map(visit => (
                                 <div key={visit.id} className="relative flex-shrink-0 inline-flex group">
                                     <button
@@ -340,10 +348,12 @@ export default function RecordDetail() {
                                         <Calendar size={13} />
                                         {visit.date}
                                     </button>
-                                    <button
-                                        onClick={e => { e.stopPropagation(); handleDeleteVisit(visit.id); }}
-                                        className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
-                                    >✕</button>
+                                    {isEditing && (
+                                        <button
+                                            onClick={e => { e.stopPropagation(); handleDeleteVisit(visit.id); }}
+                                            className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
+                                        >✕</button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -353,55 +363,96 @@ export default function RecordDetail() {
                     <div className="space-y-3">
                         <SectionLabel icon={<Coffee size={15} />} text="주문한 커피" />
                         <div className="flex gap-3 border-2 border-blue-200/60 rounded-2xl p-4 bg-blue-50/30 flex-wrap min-h-[80px] items-start content-start">
-                            <button
-                                onClick={handleAddOrder}
-                                className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
-                            >
-                                <span>+ 커피 추가</span>
-                            </button>
+                            {isEditing && (
+                                <button
+                                    onClick={handleAddOrder}
+                                    className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
+                                >
+                                    <span>+ 커피 추가</span>
+                                </button>
+                            )}
                             {orders.length > 0 ? orders.map(order => (
                                 <div key={order.id} className="relative flex-shrink-0 group">
-                                    <Link
-                                        href={`/records/${params.id}/orders/${order.id}`}
-                                        className="flex w-[170px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 hover:border-blue-400 hover:shadow-md transition-all shadow-sm"
-                                    >
-                                        <span className="font-bold text-coffee-brown text-sm group-hover:text-blue-600 truncate leading-tight">
-                                            {order.drink_name}
-                                        </span>
-                                        <div className="flex items-center justify-between text-xs">
-                                            {order.price > 0
-                                                ? <span className="font-semibold text-coffee-brown/60">₩{order.price.toLocaleString()}</span>
-                                                : <span className="text-coffee-brown/25">가격 미입력</span>
-                                            }
-                                            <div className="flex items-center gap-0.5 text-yellow-500">
-                                                <Star size={11} fill="currentColor" />
-                                                <span className="font-bold text-coffee-brown/60">{order.rating}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-1.5">
-                                            {[
-                                                { label: "A", val: order.acidity },
-                                                { label: "B", val: order.body },
-                                                { label: "S", val: order.sweetness },
-                                            ].map(({ label, val }) => (
-                                                <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
-                                                    <span className="text-[9px] text-coffee-brown/30 font-bold">{label}</span>
-                                                    <div className="w-full h-1.5 bg-coffee-brown/8 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${(val / 5) * 100}%` }} />
-                                                    </div>
+                                    {isEditing ? (
+                                        <Link
+                                            href={`/records/${params.id}/orders/${order.id}`}
+                                            className="flex w-[170px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 hover:border-blue-400 hover:shadow-md transition-all shadow-sm"
+                                        >
+                                            <span className="font-bold text-coffee-brown text-sm group-hover:text-blue-600 truncate leading-tight">
+                                                {order.drink_name}
+                                            </span>
+                                            <div className="flex items-center justify-between text-xs">
+                                                {order.price > 0
+                                                    ? <span className="font-semibold text-coffee-brown/60">₩{order.price.toLocaleString()}</span>
+                                                    : <span className="text-coffee-brown/25">가격 미입력</span>
+                                                }
+                                                <div className="flex items-center gap-0.5 text-yellow-500">
+                                                    <Star size={11} fill="currentColor" />
+                                                    <span className="font-bold text-coffee-brown/60">{order.rating}</span>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        {order.images?.length > 0 && (
-                                            <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
                                             </div>
-                                        )}
-                                    </Link>
-                                    <button
-                                        onClick={e => { e.preventDefault(); handleDeleteOrder(order.id); }}
-                                        className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
-                                    >✕</button>
+                                            <div className="flex gap-1.5">
+                                                {[
+                                                    { label: "A", val: order.acidity },
+                                                    { label: "B", val: order.body },
+                                                    { label: "S", val: order.sweetness },
+                                                ].map(({ label, val }) => (
+                                                    <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
+                                                        <span className="text-[9px] text-coffee-brown/30 font-bold">{label}</span>
+                                                        <div className="w-full h-1.5 bg-coffee-brown/8 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${(val / 5) * 100}%` }} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {order.images?.length > 0 && (
+                                                <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                    <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </Link>
+                                    ) : (
+                                        <div className="flex w-[170px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 shadow-sm">
+                                            <span className="font-bold text-coffee-brown text-sm truncate leading-tight">
+                                                {order.drink_name}
+                                            </span>
+                                            <div className="flex items-center justify-between text-xs">
+                                                {order.price > 0
+                                                    ? <span className="font-semibold text-coffee-brown/60">₩{order.price.toLocaleString()}</span>
+                                                    : <span className="text-coffee-brown/25">가격 미입력</span>
+                                                }
+                                                <div className="flex items-center gap-0.5 text-yellow-500">
+                                                    <Star size={11} fill="currentColor" />
+                                                    <span className="font-bold text-coffee-brown/60">{order.rating}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-1.5">
+                                                {[
+                                                    { label: "A", val: order.acidity },
+                                                    { label: "B", val: order.body },
+                                                    { label: "S", val: order.sweetness },
+                                                ].map(({ label, val }) => (
+                                                    <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
+                                                        <span className="text-[9px] text-coffee-brown/30 font-bold">{label}</span>
+                                                        <div className="w-full h-1.5 bg-coffee-brown/8 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${(val / 5) * 100}%` }} />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {order.images?.length > 0 && (
+                                                <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                    <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {isEditing && (
+                                        <button
+                                            onClick={e => { e.preventDefault(); handleDeleteOrder(order.id); }}
+                                            className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
+                                        >✕</button>
+                                    )}
                                 </div>
                             )) : (
                                 <div className="flex items-center text-coffee-brown/30 text-xs italic pl-2 self-center">
@@ -422,41 +473,68 @@ export default function RecordDetail() {
                     <div className="space-y-3">
                         <SectionLabel icon={<UtensilsCrossed size={15} />} text="주문한 다른 메뉴" />
                         <div className="flex gap-3 border-2 border-orange-200/60 rounded-2xl p-4 bg-orange-50/20 flex-wrap min-h-[80px] items-start content-start">
-                            <button
-                                onClick={handleAddOtherMenu}
-                                className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
-                            >
-                                <span>+ 메뉴 추가</span>
-                            </button>
+                            {isEditing && (
+                                <button
+                                    onClick={handleAddOtherMenu}
+                                    className="flex-shrink-0 w-[110px] h-[44px] border-2 border-dashed border-coffee-brown/25 rounded-lg flex items-center justify-center gap-1.5 hover:bg-white/60 transition-all text-coffee-brown/50 hover:text-coffee-brown text-xs font-bold"
+                                >
+                                    <span>+ 메뉴 추가</span>
+                                </button>
+                            )}
                             {otherItems.length > 0 ? otherItems.map(item => (
                                 <div key={item.id} className="relative flex-shrink-0 group">
-                                    <Link
-                                        href={`/records/${params.id}/menu-items/${item.id}`}
-                                        className="flex w-[160px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 shadow-sm hover:border-orange-400 hover:shadow-md transition-all"
-                                    >
-                                        <span className="font-bold text-coffee-brown text-sm truncate leading-tight group-hover:text-orange-600">
-                                            {item.name}
-                                        </span>
-                                        <div className="flex items-center justify-between text-xs">
-                                            {item.price > 0
-                                                ? <span className="font-semibold text-coffee-brown/60">₩{item.price.toLocaleString()}</span>
-                                                : <span className="text-coffee-brown/25">가격 미입력</span>
-                                            }
-                                            <div className="flex items-center gap-0.5 text-yellow-500">
-                                                <Star size={11} fill="currentColor" />
-                                                <span className="font-bold text-coffee-brown/60">{item.rating}</span>
+                                    {isEditing ? (
+                                        <Link
+                                            href={`/records/${params.id}/menu-items/${item.id}`}
+                                            className="flex w-[160px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 shadow-sm hover:border-orange-400 hover:shadow-md transition-all"
+                                        >
+                                            <span className="font-bold text-coffee-brown text-sm truncate leading-tight group-hover:text-orange-600">
+                                                {item.name}
+                                            </span>
+                                            <div className="flex items-center justify-between text-xs">
+                                                {item.price > 0
+                                                    ? <span className="font-semibold text-coffee-brown/60">₩{item.price.toLocaleString()}</span>
+                                                    : <span className="text-coffee-brown/25">가격 미입력</span>
+                                                }
+                                                <div className="flex items-center gap-0.5 text-yellow-500">
+                                                    <Star size={11} fill="currentColor" />
+                                                    <span className="font-bold text-coffee-brown/60">{item.rating}</span>
+                                                </div>
                                             </div>
+                                            {item.images?.length > 0 && (
+                                                <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                    <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
+                                        </Link>
+                                    ) : (
+                                        <div className="flex w-[160px] bg-white border border-coffee-brown/10 rounded-xl p-3 flex-col gap-2 shadow-sm">
+                                            <span className="font-bold text-coffee-brown text-sm truncate leading-tight">
+                                                {item.name}
+                                            </span>
+                                            <div className="flex items-center justify-between text-xs">
+                                                {item.price > 0
+                                                    ? <span className="font-semibold text-coffee-brown/60">₩{item.price.toLocaleString()}</span>
+                                                    : <span className="text-coffee-brown/25">가격 미입력</span>
+                                                }
+                                                <div className="flex items-center gap-0.5 text-yellow-500">
+                                                    <Star size={11} fill="currentColor" />
+                                                    <span className="font-bold text-coffee-brown/60">{item.rating}</span>
+                                                </div>
+                                            </div>
+                                            {item.images?.length > 0 && (
+                                                <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                    <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            )}
                                         </div>
-                                        {item.images?.length > 0 && (
-                                            <div className="w-full aspect-video rounded-lg overflow-hidden">
-                                                <img src={item.images[0]} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                    </Link>
-                                    <button
-                                        onClick={() => handleDeleteOtherMenu(item.id)}
-                                        className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
-                                    >✕</button>
+                                    )}
+                                    {isEditing && (
+                                        <button
+                                            onClick={() => handleDeleteOtherMenu(item.id)}
+                                            className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-500 hover:text-white shadow-sm border border-red-200 z-10"
+                                        >✕</button>
+                                    )}
                                 </div>
                             )) : (
                                 <div className="flex items-center text-coffee-brown/30 text-xs italic pl-2 self-center">
@@ -475,9 +553,15 @@ export default function RecordDetail() {
                             {atmosphereImages.map((imgUrl, index) => (
                                 <div key={index} className="aspect-square rounded-xl border border-gray-200 overflow-hidden relative shadow-sm group">
                                     <img src={imgUrl} alt={`분위기 ${index}`} className="w-full h-full object-cover" />
+                                    {isEditing && (
+                                        <button
+                                            onClick={() => handleDeleteAtmosphereImage(index)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow"
+                                        >✕</button>
+                                    )}
                                 </div>
                             ))}
-                            {atmosphereImages.length < 10 && (
+                            {isEditing && atmosphereImages.length < 10 && (
                                 <div
                                     onClick={() => fileInputRef.current?.click()}
                                     className="aspect-square bg-gray-50 rounded-xl flex flex-col items-center justify-center text-gray-400 gap-2 border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
