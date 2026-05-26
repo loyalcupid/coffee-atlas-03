@@ -34,6 +34,7 @@ interface Order {
   body: number;
   sweetness: number;
   memo?: string;
+  images?: string[];
 }
 
 interface OtherItem {
@@ -366,6 +367,16 @@ function CafeDetailContent() {
                                               <div className="h-full rounded-full" style={{ width: `${(t.val / 5) * 100}%`, backgroundColor: t.color }} />
                                             </div>
                                             <span className="cormorant text-[#FCF5E5]/50 text-xs">{t.val}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {order.images && order.images.length > 0 && (
+                                      <div className="grid grid-cols-3 gap-2">
+                                        {order.images.map((img, i) => (
+                                          <div key={i} className="aspect-square rounded-lg overflow-hidden border border-[#D4AF37]/10">
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
                                           </div>
                                         ))}
                                       </div>

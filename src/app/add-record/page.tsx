@@ -17,6 +17,7 @@ interface CoffeeOrder {
     body: number;
     sweetness: number;
     coffeeMemo: string;
+    images: string[];
 }
 
 interface OtherMenuItem {
@@ -30,7 +31,7 @@ interface OtherMenuItem {
 const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
 
 const defaultCoffee = (): CoffeeOrder => ({
-    drink: "", price: "", coffeeRating: 3, acidity: 3, body: 3, sweetness: 3, coffeeMemo: "",
+    drink: "", price: "", coffeeRating: 3, acidity: 3, body: 3, sweetness: 3, coffeeMemo: "", images: [],
 });
 
 const defaultOtherMenu = (): OtherMenuItem => ({
@@ -125,6 +126,7 @@ export default function AddRecord() {
                     body: o.body,
                     sweetness: o.sweetness,
                     memo: o.coffeeMemo,
+                    images: o.images,
                 })
             ));
 
@@ -258,6 +260,7 @@ export default function AddRecord() {
                                     index={index}
                                     order={order}
                                     total={coffeeOrders.length}
+                                    uid={user!.uid}
                                     onChange={(field, value) => updateCoffee(index, field, value)}
                                     onRemove={() => removeCoffee(index)}
                                 />
@@ -374,14 +377,38 @@ export default function AddRecord() {
 // ── CoffeeOrderCard ──────────────────────────────────────────────────────────────
 
 function CoffeeOrderCard({
-    index, order, total, onChange, onRemove,
+    index, order, total, uid, onChange, onRemove,
 }: {
     index: number;
     order: CoffeeOrder;
     total: number;
+    uid: string;
     onChange: (field: keyof CoffeeOrder, value: CoffeeOrder[keyof CoffeeOrder]) => void;
     onRemove: () => void;
 }) {
+    const coffeeFileRef = useRef<HTMLInputElement>(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (order.images.length >= 5) { alert("사진은 최대 5장까지 가능합니다."); return; }
+        setUploading(true);
+        try {
+            const ext = file.name.split(".").pop();
+            const path = `uploads/${uid}/coffee-orders/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const sRef = storageRef(storage, path);
+            await uploadBytes(sRef, file);
+            const url = await getDownloadURL(sRef);
+            onChange("images", [...order.images, url]);
+        } catch {
+            alert("이미지 업로드에 실패했습니다.");
+        } finally {
+            setUploading(false);
+            if (coffeeFileRef.current) coffeeFileRef.current.value = "";
+        }
+    };
+
     return (
         <div className="border border-coffee-brown/10 rounded-2xl p-5 space-y-5 bg-white/60">
             <div className="flex items-center justify-between">
@@ -426,6 +453,34 @@ function CoffeeOrderCard({
             <div className="space-y-3">
                 <p className="text-sm font-bold text-coffee-brown/60">커피 평점</p>
                 <StarPicker value={order.coffeeRating} onChange={v => onChange("coffeeRating", v)} activeClass="bg-coffee-accent text-coffee-brown" />
+            </div>
+            <div className="space-y-3">
+                <p className="text-sm font-bold text-coffee-brown/60">사진</p>
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                    {order.images.map((url, i) => (
+                        <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                                type="button"
+                                onClick={() => onChange("images", order.images.filter((_, idx) => idx !== i))}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                            >✕</button>
+                        </div>
+                    ))}
+                    {order.images.length < 5 && (
+                        <div
+                            onClick={() => coffeeFileRef.current?.click()}
+                            className="aspect-square bg-gray-50 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-gray-400"
+                        >
+                            <Camera size={18} />
+                            <span className="text-[9px] text-center px-1 leading-tight">
+                                {uploading ? "업로드 중..." : "사진 추가"}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <input type="file" accept="image/*" ref={coffeeFileRef} onChange={handleImageUpload} className="hidden" />
+                <p className="text-xs text-coffee-brown/30">최대 5장</p>
             </div>
             <div className="space-y-2">
                 <p className="text-sm font-bold text-coffee-brown/60">커피 메모</p>

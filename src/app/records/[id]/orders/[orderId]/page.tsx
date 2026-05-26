@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Star, Save, Home } from "lucide-react";
+import { ArrowLeft, Star, Save, Home, Camera } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { ref, get, update } from "firebase/database";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 export default function OrderDetail() {
     const params = useParams();
     const router = useRouter();
+    const { user } = useRequireAuth();
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -21,6 +24,9 @@ export default function OrderDetail() {
     const [body, setBody] = useState(3);
     const [sweetness, setSweetness] = useState(3);
     const [memo, setMemo] = useState("");
+    const [images, setImages] = useState<string[]>([]);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -36,6 +42,7 @@ export default function OrderDetail() {
                 setBody(data.body);
                 setSweetness(data.sweetness);
                 setMemo(data.memo || "");
+                setImages(data.images || []);
             } catch (error) {
                 console.error('Error fetching order:', error);
                 alert('주문 정보를 찾을 수 없습니다.');
@@ -48,11 +55,39 @@ export default function OrderDetail() {
         if (params.orderId) fetchOrder();
     }, [params.orderId]);
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        if (images.length >= 5) { alert("사진은 최대 5장까지 가능합니다."); return; }
+        setUploadingImage(true);
+        try {
+            const ext = file.name.split(".").pop();
+            const path = `uploads/${user.uid}/coffee-orders/${params.orderId}/${Date.now()}.${ext}`;
+            const sRef = storageRef(storage, path);
+            await uploadBytes(sRef, file);
+            const url = await getDownloadURL(sRef);
+            const newImages = [...images, url];
+            await update(ref(db, `orders/${params.orderId}`), { images: newImages });
+            setImages(newImages);
+        } catch {
+            alert("이미지 업로드에 실패했습니다.");
+        } finally {
+            setUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const handleRemoveImage = async (idx: number) => {
+        const newImages = images.filter((_, i) => i !== idx);
+        await update(ref(db, `orders/${params.orderId}`), { images: newImages });
+        setImages(newImages);
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
             await update(ref(db, `orders/${params.orderId}`), {
-                drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, memo
+                drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, memo, images
             });
             router.back();
         } catch (error) {
@@ -162,6 +197,35 @@ export default function OrderDetail() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Photos */}
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest border-b border-coffee-brown/10 pb-2">Photos</h3>
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                            {images.map((url, i) => (
+                                <div key={i} className="aspect-square rounded-xl overflow-hidden border border-gray-200 relative shadow-sm group">
+                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                    <button
+                                        onClick={() => handleRemoveImage(i)}
+                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                                    >✕</button>
+                                </div>
+                            ))}
+                            {images.length < 5 && (
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="aspect-square bg-gray-50 rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors text-gray-400"
+                                >
+                                    <Camera size={18} />
+                                    <span className="text-[9px] text-center px-1 leading-tight">
+                                        {uploadingImage ? "업로드 중..." : "사진 추가"}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+                        <p className="text-xs text-coffee-brown/30">최대 5장</p>
                     </div>
 
                     {/* Memo */}

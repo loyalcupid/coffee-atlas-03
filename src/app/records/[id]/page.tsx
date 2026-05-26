@@ -392,6 +392,11 @@ export default function RecordDetail() {
                                                 </div>
                                             ))}
                                         </div>
+                                        {order.images?.length > 0 && (
+                                            <div className="w-full aspect-video rounded-lg overflow-hidden">
+                                                <img src={order.images[0]} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
                                     </Link>
                                     <button
                                         onClick={e => { e.preventDefault(); handleDeleteOrder(order.id); }}
