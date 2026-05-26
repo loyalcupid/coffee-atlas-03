@@ -24,7 +24,7 @@ export default function Home() {
     !authLoading && !user ? `/login?redirect=${encodeURIComponent(path)}` : path;
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-[#FCF5E5]">
+    <div className="min-h-screen flex flex-col items-center bg-[#F0DDB0]">
 
       {/* Auth bar */}
       <div className="w-full border-b border-coffee-brown/10 px-6 py-3">
