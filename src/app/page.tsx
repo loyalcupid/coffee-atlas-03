@@ -27,7 +27,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center bg-[#F0DDB0]">
 
       {/* Auth bar */}
-      <div className="w-full border-b border-coffee-brown/10 px-6 py-3">
+      <div className="w-full bg-[#3D2515] border-b border-white/10 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-end gap-3">
           {!authLoading && (
             user ? (
@@ -40,18 +40,18 @@ export default function Home() {
                     <Shield size={12} /> 관리자
                   </Link>
                 )}
-                <span className="cormorant text-coffee-brown/60 text-sm">
+                <span className="cormorant text-white/70 text-sm">
                   {user.displayName || user.email}
                 </span>
                 <Link
                   href="/mypage"
-                  className="flex items-center gap-1.5 cormorant text-coffee-brown/60 hover:text-coffee-brown transition-colors text-sm"
+                  className="flex items-center gap-1.5 cormorant text-white/70 hover:text-white transition-colors text-sm"
                 >
                   <UserCircle size={14} /> 마이페이지
                 </Link>
                 <button
                   onClick={() => signOut(auth)}
-                  className="flex items-center gap-1.5 cormorant text-coffee-brown/60 hover:text-coffee-brown transition-colors text-sm"
+                  className="flex items-center gap-1.5 cormorant text-white/70 hover:text-white transition-colors text-sm"
                 >
                   <LogOut size={14} /> 로그아웃
                 </button>
@@ -59,7 +59,7 @@ export default function Home() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 cormorant text-coffee-brown/60 hover:text-coffee-brown transition-colors text-sm"
+                className="flex items-center gap-1.5 cormorant text-white/70 hover:text-white transition-colors text-sm"
               >
                 <LogIn size={14} /> 로그인
               </Link>
@@ -135,7 +135,7 @@ export default function Home() {
       <section className="w-full max-w-6xl px-6 pb-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href={guardedHref("/records")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#2d1a10] hover:bg-[#38200f] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#3D2515] hover:bg-[#4D3020] transition-all px-8 py-8 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -156,7 +156,7 @@ export default function Home() {
           </Link>
 
           <Link href={guardedHref("/map")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#2d1a10] hover:bg-[#38200f] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#3D2515] hover:bg-[#4D3020] transition-all px-8 py-8 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -220,8 +220,8 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="w-full py-10 text-center border-t border-[#D4AF37]/15 mt-auto">
-        <p className="cormorant text-coffee-brown/40 tracking-widest text-sm uppercase">
+      <footer className="w-full py-10 text-center bg-[#3D2515] border-t border-white/10 mt-auto">
+        <p className="cormorant text-white/50 tracking-widest text-sm uppercase">
           © 2026 Coffee Atlas &nbsp;·&nbsp; All rights reserved
         </p>
       </footer>
