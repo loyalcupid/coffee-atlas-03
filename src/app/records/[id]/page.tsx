@@ -38,6 +38,11 @@ export default function RecordDetail() {
     const [newCoffeeName, setNewCoffeeName] = useState("");
     const [showOtherMenuModal, setShowOtherMenuModal] = useState(false);
     const [newMenuName, setNewMenuName] = useState("");
+    const [confirmModal, setConfirmModal] = useState<{ message: string; onConfirm: () => void } | null>(null);
+
+    const openConfirm = (message: string, onConfirm: () => void) => {
+        setConfirmModal({ message, onConfirm });
+    };
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -101,26 +106,27 @@ export default function RecordDetail() {
         setSelectedVisitId(visitRef.key!);
     };
 
-    const handleDeleteVisit = async (visitId: string) => {
-        if (!confirm("이 방문 기록을 삭제하시겠습니까? 관련 주문 내역도 모두 삭제됩니다.")) return;
-        try {
-            const [ordersSnap, otherSnap] = await Promise.all([
-                get(dbRef(db, "orders")),
-                get(dbRef(db, "other_items")),
-            ]);
-            const toDeleteOrders = snapToArray<any>(ordersSnap).filter(o => o.visit_id === visitId);
-            const toDeleteOther = snapToArray<any>(otherSnap).filter(o => o.visit_id === visitId);
-            await Promise.all([
-                ...toDeleteOrders.map(o => remove(dbRef(db, `orders/${o.id}`))),
-                ...toDeleteOther.map(o => remove(dbRef(db, `other_items/${o.id}`))),
-                remove(dbRef(db, `visits/${visitId}`)),
-            ]);
-            const updated = visits.filter((v: any) => v.id !== visitId);
-            setVisits(updated);
-            if (selectedVisitId === visitId) setSelectedVisitId(updated.length > 0 ? (updated[0] as any).id : null);
-        } catch {
-            alert("방문 기록 삭제에 실패했습니다.");
-        }
+    const handleDeleteVisit = (visitId: string) => {
+        openConfirm("이 방문 기록을 삭제하시겠습니까?\n관련 주문 내역도 모두 삭제됩니다.", async () => {
+            try {
+                const [ordersSnap, otherSnap] = await Promise.all([
+                    get(dbRef(db, "orders")),
+                    get(dbRef(db, "other_items")),
+                ]);
+                const toDeleteOrders = snapToArray<any>(ordersSnap).filter(o => o.visit_id === visitId);
+                const toDeleteOther = snapToArray<any>(otherSnap).filter(o => o.visit_id === visitId);
+                await Promise.all([
+                    ...toDeleteOrders.map(o => remove(dbRef(db, `orders/${o.id}`))),
+                    ...toDeleteOther.map(o => remove(dbRef(db, `other_items/${o.id}`))),
+                    remove(dbRef(db, `visits/${visitId}`)),
+                ]);
+                const updated = visits.filter((v: any) => v.id !== visitId);
+                setVisits(updated);
+                if (selectedVisitId === visitId) setSelectedVisitId(updated.length > 0 ? (updated[0] as any).id : null);
+            } catch {
+                alert("방문 기록 삭제에 실패했습니다.");
+            }
+        });
     };
 
     // ── 커피 추가 / 삭제 ──
@@ -146,14 +152,15 @@ export default function RecordDetail() {
         }]);
     };
 
-    const handleDeleteOrder = async (orderId: string) => {
-        if (!confirm("이 커피 기록을 삭제하시겠습니까?")) return;
-        try {
-            await remove(dbRef(db, `orders/${orderId}`));
-            setOrders(orders.filter(o => o.id !== orderId));
-        } catch {
-            alert("커피 삭제에 실패했습니다.");
-        }
+    const handleDeleteOrder = (orderId: string) => {
+        openConfirm("이 커피 기록을 삭제하시겠습니까?", async () => {
+            try {
+                await remove(dbRef(db, `orders/${orderId}`));
+                setOrders(orders.filter(o => o.id !== orderId));
+            } catch {
+                alert("커피 삭제에 실패했습니다.");
+            }
+        });
     };
 
     // ── 다른 메뉴 추가 / 삭제 ──
@@ -181,14 +188,15 @@ export default function RecordDetail() {
         }]);
     };
 
-    const handleDeleteOtherMenu = async (itemId: string) => {
-        if (!confirm("이 메뉴 기록을 삭제하시겠습니까?")) return;
-        try {
-            await remove(dbRef(db, `other_items/${itemId}`));
-            setOtherItems(otherItems.filter(o => o.id !== itemId));
-        } catch {
-            alert("메뉴 삭제에 실패했습니다.");
-        }
+    const handleDeleteOtherMenu = (itemId: string) => {
+        openConfirm("이 메뉴 기록을 삭제하시겠습니까?", async () => {
+            try {
+                await remove(dbRef(db, `other_items/${itemId}`));
+                setOtherItems(otherItems.filter(o => o.id !== itemId));
+            } catch {
+                alert("메뉴 삭제에 실패했습니다.");
+            }
+        });
     };
 
     const handleDeleteAtmosphereImage = async (index: number) => {
@@ -226,25 +234,25 @@ export default function RecordDetail() {
         setIsEditing(false);
     };
 
-    const handleDelete = async () => {
-        if (!confirm("정말로 이 기록을 삭제하시겠습니까?")) return;
-        const [visitsSnap, ordersSnap, otherSnap] = await Promise.all([
-            get(dbRef(db, "visits")),
-            get(dbRef(db, "orders")),
-            get(dbRef(db, "other_items")),
-        ]);
-        const visitsToDelete = snapToArray<any>(visitsSnap).filter(v => v.record_id === params.id);
-        const visitIds = new Set(visitsToDelete.map(v => v.id));
-        const ordersToDelete = snapToArray<any>(ordersSnap).filter(o => visitIds.has(o.visit_id));
-        const otherToDelete = snapToArray<any>(otherSnap).filter(o => visitIds.has(o.visit_id));
-        await Promise.all([
-            ...ordersToDelete.map(o => remove(dbRef(db, `orders/${o.id}`))),
-            ...otherToDelete.map(o => remove(dbRef(db, `other_items/${o.id}`))),
-            ...visitsToDelete.map(v => remove(dbRef(db, `visits/${v.id}`))),
-        ]);
-        await remove(dbRef(db, `records/${params.id}`));
-        alert("기록이 삭제되었습니다.");
-        router.push("/records");
+    const handleDelete = () => {
+        openConfirm("정말로 이 기록을 삭제하시겠습니까?", async () => {
+            const [visitsSnap, ordersSnap, otherSnap] = await Promise.all([
+                get(dbRef(db, "visits")),
+                get(dbRef(db, "orders")),
+                get(dbRef(db, "other_items")),
+            ]);
+            const visitsToDelete = snapToArray<any>(visitsSnap).filter(v => v.record_id === params.id);
+            const visitIds = new Set(visitsToDelete.map(v => v.id));
+            const ordersToDelete = snapToArray<any>(ordersSnap).filter(o => visitIds.has(o.visit_id));
+            const otherToDelete = snapToArray<any>(otherSnap).filter(o => visitIds.has(o.visit_id));
+            await Promise.all([
+                ...ordersToDelete.map(o => remove(dbRef(db, `orders/${o.id}`))),
+                ...otherToDelete.map(o => remove(dbRef(db, `other_items/${o.id}`))),
+                ...visitsToDelete.map(v => remove(dbRef(db, `visits/${v.id}`))),
+            ]);
+            await remove(dbRef(db, `records/${params.id}`));
+            router.push("/records");
+        });
     };
 
     const totalAmount = orders.reduce((sum, o) => sum + (o.price || 0), 0);
@@ -763,6 +771,27 @@ export default function RecordDetail() {
                                 onClick={confirmAddOtherMenu}
                                 className="flex-1 py-3 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all text-sm"
                             >추가하기</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── 삭제 확인 모달 ── */}
+            {confirmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-6 shadow-2xl w-full max-w-sm space-y-5">
+                        <p className="text-coffee-brown font-medium text-center leading-relaxed whitespace-pre-line">
+                            {confirmModal.message}
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmModal(null)}
+                                className="flex-1 py-3 rounded-xl border border-coffee-brown/20 text-coffee-brown/60 font-medium hover:bg-gray-50 transition-all text-sm"
+                            >취소</button>
+                            <button
+                                onClick={() => { confirmModal.onConfirm(); setConfirmModal(null); }}
+                                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all text-sm"
+                            >삭제</button>
                         </div>
                     </div>
                 </div>
