@@ -27,7 +27,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center bg-[#F0DDB0]">
 
       {/* Auth bar */}
-      <div className="w-full bg-[#3D2515] border-b border-white/10 px-6 py-3">
+      <div className="w-full bg-[#5C3A25] border-b border-white/10 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-end gap-3">
           {!authLoading && (
             user ? (
@@ -132,10 +132,10 @@ export default function Home() {
       </section>
 
       {/* My Cafe Story + My Cafe Map Banner */}
-      <section className="w-full max-w-6xl px-6 pb-10">
+      <section className="w-full max-w-6xl px-6 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href={guardedHref("/records")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#3D2515] hover:bg-[#4D3020] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-8 py-8 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -156,7 +156,7 @@ export default function Home() {
           </Link>
 
           <Link href={guardedHref("/map")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#3D2515] hover:bg-[#4D3020] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-8 py-8 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
@@ -179,9 +179,9 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="w-full py-20 border-t border-[#D4AF37]/15">
+      <section className="w-full pt-10 pb-20 border-t border-[#D4AF37]/15">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="gold-divider text-[#D4AF37]/50 text-xs tracking-[0.4em] uppercase cormorant mb-16">
+          <div className="gold-divider text-[#5C3A25] text-xs tracking-[0.4em] uppercase cormorant mb-16">
             Our Features
           </div>
 
@@ -220,7 +220,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="w-full py-10 text-center bg-[#3D2515] border-t border-white/10 mt-auto">
+      <footer className="w-full py-10 text-center bg-[#5C3A25] border-t border-white/10 mt-auto">
         <p className="cormorant text-white/50 tracking-widest text-sm uppercase">
           © 2026 Coffee Atlas &nbsp;·&nbsp; All rights reserved
         </p>
