@@ -115,16 +115,16 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-5 pt-4 w-full justify-center">
             <Link
               href={guardedHref("/add-record")}
-              className="playfair relative overflow-hidden bg-gradient-to-br from-[#f5d45a] via-[#D4AF37] to-[#b8922f] text-[#1a0f0a] px-14 py-7 rounded-2xl text-2xl font-bold tracking-wide shadow-[0_0_35px_rgba(212,175,55,0.45)] hover:shadow-[0_0_55px_rgba(212,175,55,0.7)] hover:-translate-y-1.5 transition-all duration-300 text-center flex items-center justify-center gap-3"
+              className="playfair relative overflow-hidden bg-gradient-to-br from-[#f5d45a] via-[#D4AF37] to-[#b8922f] text-[#1a0f0a] px-10 py-5 rounded-2xl text-lg font-bold tracking-wide shadow-[0_0_35px_rgba(212,175,55,0.45)] hover:shadow-[0_0_55px_rgba(212,175,55,0.7)] hover:-translate-y-1.5 transition-all duration-300 text-center flex items-center justify-center gap-3"
             >
-              <ScrollText size={30} className="flex-shrink-0" />
+              <ScrollText size={22} className="flex-shrink-0" />
               방문카페 기록하기
             </Link>
             <Link
               href={guardedHref("/dashboard")}
-              className="playfair bg-[#2c1508] border-2 border-[#D4AF37] text-[#D4AF37] px-14 py-7 rounded-2xl text-2xl font-bold tracking-wide hover:bg-[#D4AF37] hover:text-[#1a0f0a] transition-all duration-300 text-center flex items-center justify-center gap-3 shadow-[0_0_25px_rgba(212,175,55,0.25)] hover:shadow-[0_0_50px_rgba(212,175,55,0.6)] hover:-translate-y-1.5"
+              className="playfair bg-[#2c1508] border-2 border-[#D4AF37] text-[#D4AF37] px-10 py-5 rounded-2xl text-lg font-bold tracking-wide hover:bg-[#D4AF37] hover:text-[#1a0f0a] transition-all duration-300 text-center flex items-center justify-center gap-3 shadow-[0_0_25px_rgba(212,175,55,0.25)] hover:shadow-[0_0_50px_rgba(212,175,55,0.6)] hover:-translate-y-1.5"
             >
-              <BarChart3 size={30} className="flex-shrink-0" />
+              <BarChart3 size={22} className="flex-shrink-0" />
               나의 커피 취향
             </Link>
           </div>
