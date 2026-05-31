@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
@@ -51,6 +51,7 @@ interface OtherItem {
 function CafeDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const cafeName = decodeURIComponent(params.name as string);
   const cafeLocation = decodeURIComponent(searchParams.get("loc") || "");
 
@@ -103,9 +104,6 @@ function CafeDetailContent() {
   const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,      0) / tasteSrc.length).toFixed(1) : 0;
   const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness, 0) / tasteSrc.length).toFixed(1) : 0;
 
-  const drinkCnt: Record<string, number> = {};
-  orders.forEach(o => { if (o.drink_name) drinkCnt[o.drink_name] = (drinkCnt[o.drink_name] || 0) + 1; });
-  const topDrinks = Object.entries(drinkCnt).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([n]) => n);
 
   const region = records.find(r => r.region)?.region || "";
   const reviewers = [...new Set(records.filter(r => r.author?.display_name).map(r => r.author!.display_name))];
@@ -170,12 +168,12 @@ function CafeDetailContent() {
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
 
         {/* Back */}
-        <Link
-          href="/reputation"
+        <button
+          onClick={() => router.back()}
           className="inline-flex items-center gap-2 cormorant text-[#FCF5E5]/40 hover:text-[#D4AF37] transition-colors text-sm"
         >
           <ArrowLeft size={15} /> 전국 카페 평판으로 돌아가기
-        </Link>
+        </button>
 
         {/* Cafe header */}
         <div className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 space-y-3">
@@ -242,19 +240,6 @@ function CafeDetailContent() {
           </div>
         )}
 
-        {/* Top Drinks */}
-        {topDrinks.length > 0 && (
-          <div className="border border-[#D4AF37]/20 rounded-2xl p-6 bg-[#1a0f0a]/40 space-y-4">
-            <h2 className="cormorant text-[#D4AF37]/70 text-xs uppercase tracking-widest font-bold">자주 주문한 커피</h2>
-            <div className="flex flex-wrap gap-2">
-              {topDrinks.map((d, i) => (
-                <span key={i} className="cormorant text-sm bg-[#D4AF37]/10 text-[#D4AF37]/70 border border-[#D4AF37]/20 px-3 py-1 rounded-full">
-                  {d}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Records with visits and orders */}
         {sortedRecords.length > 0 && (

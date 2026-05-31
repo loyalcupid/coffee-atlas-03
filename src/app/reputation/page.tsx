@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
@@ -27,14 +28,26 @@ interface CafeSummary {
   reviewers: string[];
 }
 
-export default function ReputationPage() {
+function ReputationContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [records, setRecords] = useState<CafeRecord[]>([]);
   const [visits,  setVisits]  = useState<Visit[]>([]);
   const [orders,  setOrders]  = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search,       setSearch]       = useState("");
-  const [sort,         setSort]         = useState<"rating" | "visits">("rating");
-  const [regionFilter, setRegionFilter] = useState("");
+  const [search,       setSearch]       = useState(searchParams.get("q") || "");
+  const [sort,         setSort]         = useState<"rating" | "visits">((searchParams.get("sort") as "rating" | "visits") || "rating");
+  const [regionFilter, setRegionFilter] = useState(searchParams.get("region") || "");
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (sort !== "rating") params.set("sort", sort);
+    if (regionFilter) params.set("region", regionFilter);
+    const qs = params.toString();
+    router.replace(qs ? `/reputation?${qs}` : "/reputation", { scroll: false });
+  }, [search, sort, regionFilter]);
 
   useEffect(() => {
     const load = async () => {
@@ -360,5 +373,17 @@ export default function ReputationPage() {
         </p>
       </footer>
     </div>
+  );
+}
+
+export default function ReputationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen cafe-bg flex items-center justify-center">
+        <div className="cormorant text-[#FCF5E5]/30 text-xl">불러오는 중...</div>
+      </div>
+    }>
+      <ReputationContent />
+    </Suspense>
   );
 }
