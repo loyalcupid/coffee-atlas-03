@@ -123,6 +123,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Section Divider */}
+      <div className="w-full max-w-6xl px-6 flex flex-col items-center gap-2 -mt-10 mb-2">
+        <div className="w-full flex items-center gap-4">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/35 to-[#D4AF37]/50" />
+          <div className="flex items-center gap-2.5 text-[#D4AF37]/50">
+            <span className="text-[10px]">◆</span>
+            <span className="cormorant text-xs tracking-[0.45em] uppercase text-[#D4AF37]/45">My Journey</span>
+            <span className="text-[10px]">◆</span>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[#D4AF37]/35 to-[#D4AF37]/50" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/30" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]/45" />
+          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/30" />
+        </div>
+      </div>
+
       {/* My Cafe Story + My Cafe Map Banner */}
       <section className="w-full max-w-6xl px-6 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
