@@ -125,3 +125,47 @@ body {
 .playfair {
   font-family: var(--font-playfair), Georgia, serif;
 }
+
+/* CTA Buttons */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5d45a, #D4AF37, #b8922f);
+  color: #1a0f0a;
+  padding: 20px 40px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: center;
+  box-shadow: 0 0 35px rgba(212, 175, 55, 0.45);
+  transition: all 0.3s ease;
+  line-height: 1.4;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 55px rgba(212, 175, 55, 0.7);
+  transform: translateY(-6px);
+}
+
+.btn-outline-gold {
+  background: #2c1508;
+  border: 2px solid #D4AF37;
+  color: #D4AF37;
+  padding: 20px 40px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.25);
+  transition: all 0.3s ease;
+  line-height: 1.4;
+}
+
+.btn-outline-gold:hover {
+  background: #D4AF37;
+  color: #1a0f0a;
+  box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
+  transform: translateY(-6px);
+}
