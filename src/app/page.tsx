@@ -153,7 +153,7 @@ export default function Home() {
                 </div>
                 <div className="text-left">
                   <p className="cormorant text-[#D4AF37]/60 text-sm tracking-[0.3em] uppercase mb-1">My Collection</p>
-                  <h2 className="playfair text-2xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">나의 카페 스토리</h2>
+                  <h2 className="playfair text-2xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">나의 카페<br />스토리</h2>
                   <p className="cormorant text-[#FCF5E5]/45 text-lg font-light mt-1">
                     내가 기록한 카페 방문 이야기를 만나보세요.
                   </p>
@@ -174,7 +174,7 @@ export default function Home() {
                 </div>
                 <div className="text-left">
                   <p className="cormorant text-[#D4AF37]/60 text-sm tracking-[0.3em] uppercase mb-1">My Map</p>
-                  <h2 className="playfair text-2xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">나의 커피 지도</h2>
+                  <h2 className="playfair text-2xl font-bold text-[#FCF5E5] group-hover:text-[#D4AF37] transition-colors">나의 커피<br />지도</h2>
                   <p className="cormorant text-[#FCF5E5]/45 text-lg font-light mt-1">
                     다녀온 카페들을 지도에서 한눈에 확인하세요.
                   </p>
