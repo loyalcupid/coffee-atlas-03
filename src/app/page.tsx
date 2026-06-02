@@ -69,7 +69,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <section className="w-full max-w-6xl px-6 pt-12 pb-24 flex flex-col items-center text-center space-y-10">
+      <section className="w-full max-w-6xl px-6 pt-12 pb-0 flex flex-col items-center text-center space-y-10">
 
         {/* Logo */}
         <img
@@ -124,20 +124,20 @@ export default function Home() {
       </section>
 
       {/* Section Divider */}
-      <div className="w-full max-w-6xl px-6 flex flex-col items-center gap-2 -mt-10 mb-2">
+      <div className="w-full max-w-6xl px-6 flex flex-col items-center gap-2 my-10">
         <div className="w-full flex items-center gap-4">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/35 to-[#D4AF37]/50" />
-          <div className="flex items-center gap-2.5 text-[#D4AF37]/50">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/70 to-[#D4AF37]/85" />
+          <div className="flex items-center gap-2.5 text-[#D4AF37]/90">
             <span className="text-[10px]">◆</span>
-            <span className="cormorant text-xs tracking-[0.45em] uppercase text-[#D4AF37]/45">My Journey</span>
+            <span className="cormorant text-xs tracking-[0.45em] uppercase text-[#D4AF37]/85">My Journey</span>
             <span className="text-[10px]">◆</span>
           </div>
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[#D4AF37]/35 to-[#D4AF37]/50" />
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[#D4AF37]/70 to-[#D4AF37]/85" />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/30" />
-          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]/45" />
-          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/30" />
+          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/60" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]/75" />
+          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/60" />
         </div>
       </div>
 
