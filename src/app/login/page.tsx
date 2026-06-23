@@ -282,7 +282,7 @@ function LoginForm() {
                 disabled={loading}
                 className="hover:text-[#FCF5E5]/50 transition-colors disabled:opacity-50"
               >
-                비밀번호를 잊으셨나요?
+                비밀번호 찾기(재설정)
               </button>
             </p>
           )}
