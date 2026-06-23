@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, Droplets, Layers, Candy } from "lucide-react";
+import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, Droplets, Layers, Candy, Wheat, Wind, Scale } from "lucide-react";
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
@@ -10,17 +10,19 @@ import { useRequireAuth } from "@/lib/useRequireAuth";
 /* ─────────────────────────── types ─────────────────────────── */
 interface CafeRecord { id: string; name: string; location: string; rating: number; }
 interface Visit      { id: string; record_id: string; date: string; }
-interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; memo: string; }
+interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; nuttiness: number; aroma: number; balance: number; memo: string; }
 
 /* ─────────────────────── Taste Radar SVG ───────────────────── */
-function TasteRadar({ acidity, body, sweetness }: { acidity: number; body: number; sweetness: number }) {
-    const W = 220, H = 220, cx = 110, cy = 110, R = 80;
+function TasteRadar({ acidity, body, sweetness, nuttiness, aroma, balance }: { acidity: number; body: number; sweetness: number; nuttiness: number; aroma: number; balance: number }) {
+    const W = 240, H = 240, cx = 120, cy = 120, R = 80;
     const toRad = (d: number) => (d * Math.PI) / 180;
-    // top=산미, bottom-right=바디감, bottom-left=단맛
     const axes = [
-        { angle: -90, label: "산미", sub: "Acidity",   val: acidity,   icon: "◈" },
-        { angle:  30, label: "바디감", sub: "Body",     val: body,      icon: "◉" },
-        { angle: 150, label: "단맛",  sub: "Sweetness", val: sweetness, icon: "◆" },
+        { angle: -90, label: "산미",   val: acidity   },
+        { angle: -30, label: "향미",   val: aroma     },
+        { angle:  30, label: "바디감", val: body      },
+        { angle:  90, label: "고소함", val: nuttiness },
+        { angle: 150, label: "단맛",   val: sweetness },
+        { angle: 210, label: "균형감", val: balance   },
     ];
     const scaledPts = axes.map(a => ({
         x: cx + R * (a.val / 5) * Math.cos(toRad(a.angle)),
@@ -91,12 +93,18 @@ function MonthlyBar({ data }: { data: { label: string; count: number }[] }) {
 }
 
 /* ───────────────────── Taste Type Logic ────────────────────── */
-function getTasteType(acidity: number, body: number, sweetness: number): { emoji: string; label: string; desc: string } {
-    if (acidity === 0 && body === 0 && sweetness === 0) return { emoji: "☕", label: "기록 중", desc: "더 많은 커피를 기록해보세요" };
-    const diff = Math.max(acidity, body, sweetness) - Math.min(acidity, body, sweetness);
+function getTasteType(acidity: number, body: number, sweetness: number, nuttiness: number, aroma: number, balance: number): { emoji: string; label: string; desc: string } {
+    if (acidity === 0 && body === 0 && sweetness === 0 && nuttiness === 0 && aroma === 0 && balance === 0)
+        return { emoji: "☕", label: "기록 중", desc: "더 많은 커피를 기록해보세요" };
+    const vals = [acidity, body, sweetness, nuttiness, aroma, balance];
+    const diff = Math.max(...vals) - Math.min(...vals);
     if (diff < 0.5) return { emoji: "⚖️", label: "균형형", desc: "어떤 커피든 조화롭게 즐기는 타입" };
-    if (acidity >= body && acidity >= sweetness) return { emoji: "🍋", label: "산미 선호형", desc: "밝고 과일향 풍부한 스페셜티 추천" };
-    if (body >= acidity && body >= sweetness)    return { emoji: "🌊", label: "바디감 선호형", desc: "묵직하고 진한 에스프레소 베이스 추천" };
+    const max = Math.max(...vals);
+    if (acidity   === max) return { emoji: "🍋", label: "산미 선호형",   desc: "밝고 과일향 풍부한 스페셜티 추천" };
+    if (body      === max) return { emoji: "🌊", label: "바디감 선호형", desc: "묵직하고 진한 에스프레소 베이스 추천" };
+    if (nuttiness === max) return { emoji: "🌰", label: "고소함 선호형", desc: "고소하고 부드러운 블렌드 추천" };
+    if (aroma     === max) return { emoji: "🌸", label: "향미 선호형",   desc: "향긋하고 복잡한 싱글오리진 추천" };
+    if (balance   === max) return { emoji: "⚖️", label: "균형감 선호형", desc: "완벽한 균형의 시그니처 블렌드 추천" };
     return { emoji: "🍯", label: "단맛 선호형", desc: "달콤하고 부드러운 라떼 계열 추천" };
 }
 
@@ -136,11 +144,14 @@ export default function Dashboard() {
     const totalCafes    = records.length;
     const totalVisits   = visits.length;
     const monthlyVisits = visits.filter(v => v.date?.startsWith(thisMonth)).length;
-    const avgRating     = orders.length ? +(orders.reduce((s, o) => s + (o.rating ?? 0), 0) / orders.length).toFixed(1) : 0;
+    const avgRating     = orders.length ? +(orders.reduce((s, o) => s + (o.rating    ?? 0), 0) / orders.length).toFixed(1) : 0;
     const avgAcidity    = orders.length ? +(orders.reduce((s, o) => s + (o.acidity   ?? 0), 0) / orders.length).toFixed(1) : 0;
     const avgBody       = orders.length ? +(orders.reduce((s, o) => s + (o.body      ?? 0), 0) / orders.length).toFixed(1) : 0;
     const avgSweetness  = orders.length ? +(orders.reduce((s, o) => s + (o.sweetness ?? 0), 0) / orders.length).toFixed(1) : 0;
-    const tasteType     = getTasteType(avgAcidity, avgBody, avgSweetness);
+    const avgNuttiness  = orders.length ? +(orders.reduce((s, o) => s + (o.nuttiness ?? 0), 0) / orders.length).toFixed(1) : 0;
+    const avgAroma      = orders.length ? +(orders.reduce((s, o) => s + (o.aroma     ?? 0), 0) / orders.length).toFixed(1) : 0;
+    const avgBalance    = orders.length ? +(orders.reduce((s, o) => s + (o.balance   ?? 0), 0) / orders.length).toFixed(1) : 0;
+    const tasteType     = getTasteType(avgAcidity, avgBody, avgSweetness, avgNuttiness, avgAroma, avgBalance);
 
     /* ── top drinks ── */
     const topDrinks = useMemo(() => {
@@ -188,10 +199,10 @@ export default function Dashboard() {
 
     /* ── rating level ── */
     const ratingLevel =
-        avgRating >= 4.5 ? { label: "엄격한 미식가", color: "text-amber-600" } :
-        avgRating >= 3.5 ? { label: "커피 애호가",   color: "text-coffee-brown" } :
-        avgRating >  0   ? { label: "커피 입문자",   color: "text-coffee-brown/60" } :
-                           { label: "기록 없음",     color: "text-coffee-brown/30" };
+        avgRating >= 9 ? { label: "엄격한 미식가", color: "text-amber-600" } :
+        avgRating >= 7 ? { label: "커피 애호가",   color: "text-coffee-brown" } :
+        avgRating >  0 ? { label: "커피 입문자",   color: "text-coffee-brown/60" } :
+                         { label: "기록 없음",     color: "text-coffee-brown/30" };
 
     if (authLoading || loading) return (
         <div className="min-h-screen bg-[#FCF5E5] flex items-center justify-center">
@@ -257,7 +268,7 @@ export default function Dashboard() {
                             <p className="text-[#D4AF37] text-xs font-bold tracking-widest uppercase">Taste DNA</p>
                             <h2 className="text-white text-xl font-black">나의 맛 프로파일</h2>
                         </div>
-                        <TasteRadar acidity={avgAcidity} body={avgBody} sweetness={avgSweetness} />
+                        <TasteRadar acidity={avgAcidity} body={avgBody} sweetness={avgSweetness} nuttiness={avgNuttiness} aroma={avgAroma} balance={avgBalance} />
                         <div className="mt-3 p-3 bg-white/8 rounded-2xl border border-white/10 relative z-10">
                             <div className="flex items-center gap-2">
                                 <span className="text-2xl">{tasteType.emoji}</span>
@@ -267,12 +278,15 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
-                        {/* 3 taste bars below radar */}
+                        {/* 6 taste bars below radar */}
                         <div className="mt-4 space-y-2.5 relative z-10">
                             {[
-                                { label: "산미 (Acidity)",   val: avgAcidity,   icon: <Droplets size={12} />, color: "#7EC8E3" },
-                                { label: "바디감 (Body)",     val: avgBody,      icon: <Layers   size={12} />, color: "#C8A97E" },
-                                { label: "단맛 (Sweetness)", val: avgSweetness, icon: <Candy    size={12} />, color: "#D4AF37" },
+                                { label: "산미 (Acidity)",    val: avgAcidity,   icon: <Droplets size={12} />, color: "#7EC8E3" },
+                                { label: "바디감 (Body)",      val: avgBody,      icon: <Layers   size={12} />, color: "#C8A97E" },
+                                { label: "단맛 (Sweetness)",  val: avgSweetness, icon: <Candy    size={12} />, color: "#D4AF37" },
+                                { label: "고소함 (Nuttiness)", val: avgNuttiness, icon: <Wheat    size={12} />, color: "#A8C97E" },
+                                { label: "향미 (Aroma)",       val: avgAroma,     icon: <Wind     size={12} />, color: "#E3A8E0" },
+                                { label: "균형감 (Balance)",   val: avgBalance,   icon: <Scale    size={12} />, color: "#7EC8C8" },
                             ].map((t, i) => (
                                 <div key={i} className="space-y-1">
                                     <div className="flex items-center justify-between text-xs">
@@ -301,12 +315,12 @@ export default function Dashboard() {
                                 <div className="flex items-center gap-1 mt-0.5">
                                     {[1,2,3,4,5].map(n => (
                                         <Star key={n} size={13}
-                                            fill={avgRating >= n ? "#D4AF37" : "none"}
-                                            stroke={avgRating >= n ? "#D4AF37" : "#D4AF37"}
+                                            fill={avgRating / 2 >= n ? "#D4AF37" : "none"}
+                                            stroke="#D4AF37"
                                             strokeWidth={1.5}
                                             className="transition-all" />
                                     ))}
-                                    <span className="text-xs text-coffee-brown/40 ml-1">평균 {avgRating}점</span>
+                                    <span className="text-xs text-coffee-brown/40 ml-1">평균 {avgRating}/10점</span>
                                 </div>
                             </div>
                         </div>
@@ -391,7 +405,7 @@ export default function Dashboard() {
                                         <div className="flex items-center gap-1.5 bg-[#D4AF37]/20 text-[#D4AF37] px-3 py-1.5 rounded-full border border-[#D4AF37]/30">
                                             <Star size={14} fill="currentColor" />
                                             <span className="font-black text-lg">{bestCafe.avgRating.toFixed(1)}</span>
-                                            <span className="text-xs opacity-70">/ 5</span>
+                                            <span className="text-xs opacity-70">/ 10</span>
                                         </div>
                                         <div className="text-white/50 text-sm">
                                             <span className="text-white font-bold">{bestCafe.visitCount}</span>번 방문
@@ -456,7 +470,7 @@ export default function Dashboard() {
                                     {order && (
                                         <div className="flex-shrink-0 flex items-center gap-2">
                                             <div className="flex items-center gap-0.5 text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
-                                                <Star size={11} fill="currentColor" />{order.rating}
+                                                <Star size={11} fill="currentColor" />{order.rating}<span className="font-normal">/10</span>
                                             </div>
                                         </div>
                                     )}
@@ -473,11 +487,14 @@ export default function Dashboard() {
                         <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest">Taste Deep Dive</p>
                         <h2 className="text-coffee-brown font-black text-lg mt-0.5">기록 기반 상세 통계</h2>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {[
-                            { label: "산미 (Acidity)",   avg: avgAcidity,    sub: orders.length ? `${orders.filter(o=>o.acidity>=4).length}개 기록이 4점 이상` : "기록 없음", icon: <Droplets size={20} />, color: "#7EC8E3", bg: "#EFF8FF" },
-                            { label: "바디감 (Body)",     avg: avgBody,       sub: orders.length ? `${orders.filter(o=>o.body>=4).length}개 기록이 4점 이상` : "기록 없음",   icon: <Layers   size={20} />, color: "#C8A97E", bg: "#FBF5EE" },
-                            { label: "단맛 (Sweetness)", avg: avgSweetness,  sub: orders.length ? `${orders.filter(o=>o.sweetness>=4).length}개 기록이 4점 이상` : "기록 없음", icon: <Candy    size={20} />, color: "#D4AF37", bg: "#FDFBEF" },
+                            { label: "산미 (Acidity)",    avg: avgAcidity,   sub: orders.length ? `${orders.filter(o=>o.acidity>=4).length}개 기록이 4점 이상` : "기록 없음",   icon: <Droplets size={20} />, color: "#7EC8E3", bg: "#EFF8FF" },
+                            { label: "바디감 (Body)",      avg: avgBody,      sub: orders.length ? `${orders.filter(o=>o.body>=4).length}개 기록이 4점 이상` : "기록 없음",     icon: <Layers   size={20} />, color: "#C8A97E", bg: "#FBF5EE" },
+                            { label: "단맛 (Sweetness)",  avg: avgSweetness, sub: orders.length ? `${orders.filter(o=>o.sweetness>=4).length}개 기록이 4점 이상` : "기록 없음",  icon: <Candy    size={20} />, color: "#D4AF37", bg: "#FDFBEF" },
+                            { label: "고소함 (Nuttiness)", avg: avgNuttiness, sub: orders.length ? `${orders.filter(o=>(o.nuttiness??0)>=4).length}개 기록이 4점 이상` : "기록 없음", icon: <Wheat size={20} />, color: "#A8C97E", bg: "#F0F8EE" },
+                            { label: "향미 (Aroma)",       avg: avgAroma,     sub: orders.length ? `${orders.filter(o=>(o.aroma??0)>=4).length}개 기록이 4점 이상` : "기록 없음",     icon: <Wind  size={20} />, color: "#E3A8E0", bg: "#FDF0FD" },
+                            { label: "균형감 (Balance)",   avg: avgBalance,   sub: orders.length ? `${orders.filter(o=>(o.balance??0)>=4).length}개 기록이 4점 이상` : "기록 없음",   icon: <Scale size={20} />, color: "#7EC8C8", bg: "#EFFBFB" },
                         ].map((item, i) => (
                             <div key={i} className="rounded-2xl p-4 border border-coffee-brown/5" style={{ background: item.bg }}>
                                 <div className="flex items-center gap-2 mb-3">

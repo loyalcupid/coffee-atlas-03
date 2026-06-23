@@ -17,6 +17,9 @@ interface CoffeeOrder {
     acidity: number;
     body: number;
     sweetness: number;
+    nuttiness: number;
+    aroma: number;
+    balance: number;
     coffeeMemo: string;
     images: string[];
 }
@@ -32,7 +35,7 @@ interface OtherMenuItem {
 const REGIONS = ["서울","경기","인천","강원","충북","충남","대전","전북","전남","광주","경북","대구","경주","경남","울산","부산","제주"] as const;
 
 const defaultCoffee = (): CoffeeOrder => ({
-    drink: "", price: "", coffeeRating: 3, acidity: 3, body: 3, sweetness: 3, coffeeMemo: "", images: [],
+    drink: "", price: "", coffeeRating: 5, acidity: 3, body: 3, sweetness: 3, nuttiness: 3, aroma: 3, balance: 3, coffeeMemo: "", images: [],
 });
 
 const defaultOtherMenu = (): OtherMenuItem => ({
@@ -127,6 +130,9 @@ export default function AddRecord() {
                     acidity: o.acidity,
                     body: o.body,
                     sweetness: o.sweetness,
+                    nuttiness: o.nuttiness,
+                    aroma: o.aroma,
+                    balance: o.balance,
                     memo: o.coffeeMemo,
                     images: o.images,
                 })
@@ -461,10 +467,13 @@ function CoffeeOrderCard({
                 <RangeSlider label="산미 (Acidity)" value={order.acidity} onChange={v => onChange("acidity", v)} />
                 <RangeSlider label="바디감 (Body)" value={order.body} onChange={v => onChange("body", v)} />
                 <RangeSlider label="단맛 (Sweetness)" value={order.sweetness} onChange={v => onChange("sweetness", v)} />
+                <RangeSlider label="고소함 (Nuttiness)" value={order.nuttiness} onChange={v => onChange("nuttiness", v)} />
+                <RangeSlider label="향미 (Aroma)" value={order.aroma} onChange={v => onChange("aroma", v)} />
+                <RangeSlider label="균형감 (Balance)" value={order.balance} onChange={v => onChange("balance", v)} />
             </div>
             <div className="space-y-3">
-                <p className="text-sm font-bold text-coffee-brown/60">커피 평점</p>
-                <StarPicker value={order.coffeeRating} onChange={v => onChange("coffeeRating", v)} activeClass="bg-coffee-accent text-coffee-brown" />
+                <p className="text-sm font-bold text-coffee-brown/60">커피 평점 <span className="font-normal text-xs text-coffee-brown/40">(10점 만점)</span></p>
+                <TenPointPicker value={order.coffeeRating} onChange={v => onChange("coffeeRating", v)} />
             </div>
             <div className="space-y-3">
                 <p className="text-sm font-bold text-coffee-brown/60">사진</p>
@@ -679,6 +688,30 @@ function StarPicker({ value, onChange, activeClass }: { value: number; onChange:
                     <Star size={20} fill={value >= s ? "currentColor" : "none"} />
                 </button>
             ))}
+        </div>
+    );
+}
+
+function TenPointPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+    return (
+        <div className="space-y-2">
+            <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                    <button
+                        key={n}
+                        type="button"
+                        onClick={() => onChange(n)}
+                        className={`h-10 rounded-xl font-bold text-sm transition-all ${
+                            value === n
+                                ? "bg-coffee-accent text-coffee-brown shadow-md scale-105"
+                                : "bg-coffee-brown/5 text-coffee-brown/50 hover:bg-coffee-brown/10"
+                        }`}
+                    >
+                        {n}
+                    </button>
+                ))}
+            </div>
+            <p className="text-xs text-coffee-brown/30 text-right">{value} / 10점</p>
         </div>
     );
 }

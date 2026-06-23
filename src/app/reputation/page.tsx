@@ -12,7 +12,7 @@ type Region = typeof REGIONS[number];
 
 interface CafeRecord { id: string; name: string; location: string; region?: string; rating: number; author?: { uid: string; display_name: string }; }
 interface Visit      { id: string; record_id: string; date: string; }
-interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; }
+interface Order      { id: string; visit_id: string; drink_name: string; rating: number; acidity: number; body: number; sweetness: number; nuttiness: number; aroma: number; balance: number; }
 
 interface CafeSummary {
   name: string;
@@ -25,6 +25,9 @@ interface CafeSummary {
   avgAcidity: number;
   avgBody: number;
   avgSweetness: number;
+  avgNuttiness: number;
+  avgAroma: number;
+  avgBalance: number;
   reviewers: string[];
 }
 
@@ -93,14 +96,17 @@ function ReputationContent() {
         const topDrinks = Object.entries(drinkCnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n]) => n);
 
         const tasteSrc = c.orders.filter(o => o.acidity);
-        const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,   0) / tasteSrc.length).toFixed(1) : 0;
-        const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,      0) / tasteSrc.length).toFixed(1) : 0;
-        const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness, 0) / tasteSrc.length).toFixed(1) : 0;
+        const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,            0) / tasteSrc.length).toFixed(1) : 0;
+        const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,               0) / tasteSrc.length).toFixed(1) : 0;
+        const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness,          0) / tasteSrc.length).toFixed(1) : 0;
+        const avgNuttiness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.nuttiness ?? 0),   0) / tasteSrc.length).toFixed(1) : 0;
+        const avgAroma     = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.aroma     ?? 0),   0) / tasteSrc.length).toFixed(1) : 0;
+        const avgBalance   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.balance   ?? 0),   0) / tasteSrc.length).toFixed(1) : 0;
 
         const reviewers = [...new Set(c.records.filter(r => r.author?.display_name).map(r => r.author!.display_name))];
 
         return { name: c.name, location: c.location, region: c.region, avgCafeRating, visitCount: c.visits.length,
-                 recordCount: c.records.length, topDrinks, avgAcidity, avgBody, avgSweetness, reviewers };
+                 recordCount: c.records.length, topDrinks, avgAcidity, avgBody, avgSweetness, avgNuttiness, avgAroma, avgBalance, reviewers };
       });
   }, [records, visits, orders]);
 

@@ -34,6 +34,9 @@ interface Order {
   acidity: number;
   body: number;
   sweetness: number;
+  nuttiness: number;
+  aroma: number;
+  balance: number;
   memo?: string;
   images?: string[];
 }
@@ -100,9 +103,12 @@ function CafeDetailContent() {
     ? +(cafeRatings.reduce((s, v) => s + v, 0) / cafeRatings.length).toFixed(1) : 0;
 
   const tasteSrc = orders.filter(o => o.acidity);
-  const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,   0) / tasteSrc.length).toFixed(1) : 0;
-  const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,      0) / tasteSrc.length).toFixed(1) : 0;
-  const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness, 0) / tasteSrc.length).toFixed(1) : 0;
+  const avgAcidity   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.acidity,    0) / tasteSrc.length).toFixed(1) : 0;
+  const avgBody      = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.body,       0) / tasteSrc.length).toFixed(1) : 0;
+  const avgSweetness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + o.sweetness,  0) / tasteSrc.length).toFixed(1) : 0;
+  const avgNuttiness = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.nuttiness ?? 0), 0) / tasteSrc.length).toFixed(1) : 0;
+  const avgAroma     = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.aroma     ?? 0), 0) / tasteSrc.length).toFixed(1) : 0;
+  const avgBalance   = tasteSrc.length ? +(tasteSrc.reduce((s, o) => s + (o.balance   ?? 0), 0) / tasteSrc.length).toFixed(1) : 0;
 
 
   const region = records.find(r => r.region)?.region || "";
@@ -224,12 +230,15 @@ function CafeDetailContent() {
             <h2 className="cormorant text-[#D4AF37]/70 text-xs uppercase tracking-widest font-bold">테이스트 프로파일</h2>
             <div className="space-y-3">
               {[
-                { label: "산미", val: avgAcidity,   color: "#7EC8E3" },
-                { label: "바디", val: avgBody,      color: "#C8A97E" },
-                { label: "단맛", val: avgSweetness, color: "#D4AF37" },
+                { label: "산미",   val: avgAcidity,   color: "#7EC8E3" },
+                { label: "바디",   val: avgBody,      color: "#C8A97E" },
+                { label: "단맛",   val: avgSweetness, color: "#D4AF37" },
+                { label: "고소함", val: avgNuttiness, color: "#A8C97E" },
+                { label: "향미",   val: avgAroma,     color: "#E3A8E0" },
+                { label: "균형감", val: avgBalance,   color: "#7EC8C8" },
               ].map((t, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="cormorant text-[#FCF5E5]/50 text-sm w-8">{t.label}</span>
+                  <span className="cormorant text-[#FCF5E5]/50 text-sm w-12">{t.label}</span>
                   <div className="flex-1 h-2 bg-white/8 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${(t.val / 5) * 100}%`, backgroundColor: t.color }} />
                   </div>
@@ -334,27 +343,25 @@ function CafeDetailContent() {
                                             ₩{order.price.toLocaleString()}
                                           </span>
                                         )}
-                                        <div className="flex items-center gap-0.5">
-                                          {[1,2,3,4,5].map(n => (
-                                            <Star key={n} size={11}
-                                              fill={order.rating >= n ? "#D4AF37" : "none"}
-                                              stroke="#D4AF37"
-                                              strokeWidth={1.5}
-                                            />
-                                          ))}
+                                        <div className="flex items-center gap-1">
+                                          <Star size={11} fill="#D4AF37" stroke="#D4AF37" strokeWidth={1.5} />
+                                          <span className="cormorant text-[#D4AF37]/80 text-sm font-bold">{order.rating}/10</span>
                                         </div>
                                       </div>
                                     </div>
 
                                     {order.acidity > 0 && (
-                                      <div className="flex gap-4 flex-wrap">
+                                      <div className="flex gap-3 flex-wrap">
                                         {[
-                                          { label: "산미", val: order.acidity,   color: "#7EC8E3" },
-                                          { label: "바디", val: order.body,      color: "#C8A97E" },
-                                          { label: "단맛", val: order.sweetness, color: "#D4AF37" },
-                                        ].map((t, ti) => (
+                                          { label: "산미",   val: order.acidity,            color: "#7EC8E3" },
+                                          { label: "바디",   val: order.body,               color: "#C8A97E" },
+                                          { label: "단맛",   val: order.sweetness,          color: "#D4AF37" },
+                                          { label: "고소함", val: order.nuttiness ?? 0,     color: "#A8C97E" },
+                                          { label: "향미",   val: order.aroma     ?? 0,     color: "#E3A8E0" },
+                                          { label: "균형감", val: order.balance   ?? 0,     color: "#7EC8C8" },
+                                        ].filter(t => t.val > 0).map((t, ti) => (
                                           <div key={ti} className="flex items-center gap-2 min-w-[80px]">
-                                            <span className="cormorant text-[#FCF5E5]/40 text-xs w-6">{t.label}</span>
+                                            <span className="cormorant text-[#FCF5E5]/40 text-xs w-10">{t.label}</span>
                                             <div className="flex-1 h-1.5 bg-white/8 rounded-full overflow-hidden w-12">
                                               <div className="h-full rounded-full" style={{ width: `${(t.val / 5) * 100}%`, backgroundColor: t.color }} />
                                             </div>

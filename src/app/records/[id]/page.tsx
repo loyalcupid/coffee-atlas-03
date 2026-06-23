@@ -144,13 +144,13 @@ export default function RecordDetail() {
         const orderRef = await push(dbRef(db, "orders"), {
             visit_id: selectedVisitId,
             drink_name: newCoffeeName.trim(),
-            price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3,
+            price: 0, rating: 5, acidity: 3, body: 3, sweetness: 3, nuttiness: 3, aroma: 3, balance: 3,
         });
         setOrders([...orders, {
             id: orderRef.key,
             visit_id: selectedVisitId,
             drink_name: newCoffeeName.trim(),
-            price: 0, rating: 3, acidity: 3, body: 3, sweetness: 3,
+            price: 0, rating: 5, acidity: 3, body: 3, sweetness: 3, nuttiness: 3, aroma: 3, balance: 3,
         }]);
     };
 
@@ -398,19 +398,22 @@ export default function RecordDetail() {
                                                 }
                                                 <div className="flex items-center gap-0.5 text-yellow-500">
                                                     <Star size={11} fill="currentColor" />
-                                                    <span className="font-bold text-coffee-brown/60">{order.rating}</span>
+                                                    <span className="font-bold text-coffee-brown/60">{order.rating}<span className="font-normal text-[8px]">/10</span></span>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-1.5">
+                                            <div className="flex gap-1">
                                                 {[
-                                                    { label: "A", val: order.acidity },
-                                                    { label: "B", val: order.body },
-                                                    { label: "S", val: order.sweetness },
+                                                    { label: "산", val: order.acidity },
+                                                    { label: "바", val: order.body },
+                                                    { label: "단", val: order.sweetness },
+                                                    { label: "고", val: order.nuttiness },
+                                                    { label: "향", val: order.aroma },
+                                                    { label: "균", val: order.balance },
                                                 ].map(({ label, val }) => (
                                                     <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
-                                                        <span className="text-[9px] text-coffee-brown/30 font-bold">{label}</span>
+                                                        <span className="text-[8px] text-coffee-brown/30 font-bold">{label}</span>
                                                         <div className="w-full h-1.5 bg-coffee-brown/8 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${(val / 5) * 100}%` }} />
+                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${((val ?? 0) / 5) * 100}%` }} />
                                                         </div>
                                                     </div>
                                                 ))}
@@ -438,19 +441,22 @@ export default function RecordDetail() {
                                                 }
                                                 <div className="flex items-center gap-0.5 text-yellow-500">
                                                     <Star size={11} fill="currentColor" />
-                                                    <span className="font-bold text-coffee-brown/60">{order.rating}</span>
+                                                    <span className="font-bold text-coffee-brown/60">{order.rating}<span className="font-normal text-[8px]">/10</span></span>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-1.5">
+                                            <div className="flex gap-1">
                                                 {[
-                                                    { label: "A", val: order.acidity },
-                                                    { label: "B", val: order.body },
-                                                    { label: "S", val: order.sweetness },
+                                                    { label: "산", val: order.acidity },
+                                                    { label: "바", val: order.body },
+                                                    { label: "단", val: order.sweetness },
+                                                    { label: "고", val: order.nuttiness },
+                                                    { label: "향", val: order.aroma },
+                                                    { label: "균", val: order.balance },
                                                 ].map(({ label, val }) => (
                                                     <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
-                                                        <span className="text-[9px] text-coffee-brown/30 font-bold">{label}</span>
+                                                        <span className="text-[8px] text-coffee-brown/30 font-bold">{label}</span>
                                                         <div className="w-full h-1.5 bg-coffee-brown/8 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${(val / 5) * 100}%` }} />
+                                                            <div className="h-full bg-coffee-brown/30 rounded-full transition-all" style={{ width: `${((val ?? 0) / 5) * 100}%` }} />
                                                         </div>
                                                     </div>
                                                 ))}

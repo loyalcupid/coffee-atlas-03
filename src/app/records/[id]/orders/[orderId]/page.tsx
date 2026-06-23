@@ -20,10 +20,13 @@ export default function OrderDetail() {
 
     const [drinkName, setDrinkName] = useState("");
     const [price, setPrice] = useState<number | "">(0);
-    const [rating, setRating] = useState(3);
+    const [rating, setRating] = useState(5);
     const [acidity, setAcidity] = useState(3);
     const [body, setBody] = useState(3);
     const [sweetness, setSweetness] = useState(3);
+    const [nuttiness, setNuttiness] = useState(3);
+    const [aroma, setAroma] = useState(3);
+    const [balance, setBalance] = useState(3);
     const [memo, setMemo] = useState("");
     const [images, setImages] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -43,6 +46,9 @@ export default function OrderDetail() {
                 setAcidity(data.acidity);
                 setBody(data.body);
                 setSweetness(data.sweetness);
+                setNuttiness(data.nuttiness ?? 3);
+                setAroma(data.aroma ?? 3);
+                setBalance(data.balance ?? 3);
                 setMemo(data.memo || "");
                 setImages(data.images || []);
             } catch (error) {
@@ -89,7 +95,7 @@ export default function OrderDetail() {
         setSaving(true);
         try {
             await update(ref(db, `orders/${params.orderId}`), {
-                drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, memo, images
+                drink_name: drinkName, price: price || 0, rating, acidity, body, sweetness, nuttiness, aroma, balance, memo, images
             });
             router.back();
         } catch (error) {
@@ -157,18 +163,19 @@ export default function OrderDetail() {
 
                     {/* Overall Rating */}
                     <div className="space-y-4">
-                        <label className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest">Rating</label>
-                        <div className="flex gap-2">
-                            {[1, 2, 3, 4, 5].map(num => (
+                        <label className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest">Rating <span className="normal-case font-normal">(10점 만점)</span></label>
+                        <div className="grid grid-cols-5 gap-2">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                                 <button
                                     key={num}
                                     onClick={() => setRating(num)}
-                                    className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1 ${rating === num ? 'bg-yellow-500 text-white shadow-lg scale-105' : 'bg-coffee-brown/5 text-coffee-brown hover:bg-coffee-brown/10'}`}
+                                    className={`py-3 rounded-xl font-bold transition-all flex items-center justify-center ${rating === num ? 'bg-yellow-500 text-white shadow-lg scale-105' : 'bg-coffee-brown/5 text-coffee-brown hover:bg-coffee-brown/10'}`}
                                 >
-                                    <Star size={18} fill={rating >= num ? "currentColor" : "none"} /> {num}
+                                    {num}
                                 </button>
                             ))}
                         </div>
+                        <p className="text-xs text-coffee-brown/30 text-right">{rating} / 10점</p>
                     </div>
 
                     {/* Taste Profile */}
@@ -176,9 +183,12 @@ export default function OrderDetail() {
                         <h3 className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest border-b border-coffee-brown/10 pb-2">Taste Profile</h3>
                         <div className="space-y-8">
                             {[
-                                { label: "Acidity (산미)", value: acidity, setter: setAcidity },
-                                { label: "Body (바디감)", value: body, setter: setBody },
-                                { label: "Sweetness (단맛)", value: sweetness, setter: setSweetness },
+                                { label: "Acidity (산미)",       value: acidity,   setter: setAcidity },
+                                { label: "Body (바디감)",         value: body,      setter: setBody },
+                                { label: "Sweetness (단맛)",      value: sweetness, setter: setSweetness },
+                                { label: "Nuttiness (고소함)",    value: nuttiness, setter: setNuttiness },
+                                { label: "Aroma (향미)",          value: aroma,     setter: setAroma },
+                                { label: "Balance (균형감)",      value: balance,   setter: setBalance },
                             ].map(item => (
                                 <div key={item.label} className="space-y-4">
                                     <div className="flex justify-between items-end">
