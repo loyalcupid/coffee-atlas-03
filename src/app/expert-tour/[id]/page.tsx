@@ -7,6 +7,7 @@ import { db, auth } from "@/lib/firebase";
 import { ref, onValue, remove } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
 import { Home, MapPin, Users, Coffee, Clock, BookOpen, ChevronLeft, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
 
 const ADMIN_EMAIL = "doin25@gmail.com";
 
@@ -30,6 +31,7 @@ export default function ExpertCafeDetailPage() {
   const [activePhoto, setActivePhoto] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onValue(ref(db, `expertCafes/${id}`), (snap) => {
@@ -199,7 +201,10 @@ export default function ExpertCafeDetailPage() {
                   <div key={i} className="border border-[#D4AF37]/15 rounded-xl p-5 bg-[#1a0f0a]/30 space-y-3">
                     <div className="flex gap-4 items-start">
                       {menu.photo && (
-                        <div className="w-16 h-16 rounded-xl overflow-hidden border border-[#D4AF37]/20 flex-shrink-0">
+                        <div
+                          className="w-16 h-16 rounded-xl overflow-hidden border border-[#D4AF37]/20 flex-shrink-0 cursor-pointer hover:border-[#D4AF37]/60 transition-all"
+                          onClick={() => setLightboxUrl(menu.photo)}
+                        >
                           <img src={menu.photo} alt={menu.name} className="w-full h-full object-cover" />
                         </div>
                       )}
@@ -292,6 +297,8 @@ export default function ExpertCafeDetailPage() {
           © 2026 Coffee Atlas · All rights reserved
         </p>
       </footer>
+
+      {lightboxUrl && <PhotoLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
     </div>
   );
 }
