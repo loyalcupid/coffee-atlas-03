@@ -14,6 +14,7 @@ interface CafeRecord {
   location: string;
   region?: string;
   rating: number;
+  atmosphere_rating?: number;
   atmosphere_images?: string[];
   overall_memo?: string;
   author?: { uid: string; display_name: string };
@@ -306,6 +307,33 @@ function CafeDetailContent() {
                       <p className="cormorant text-[#FCF5E5]/60 text-sm leading-relaxed pl-5 italic">
                         {record.overall_memo}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Atmosphere Rating */}
+                  {record.atmosphere_rating != null && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Star size={13} className="text-[#D4AF37]/40" />
+                        <span className="cormorant text-[#D4AF37]/60 text-xs uppercase tracking-wider">카페 분위기</span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-5">
+                        {[1,2,3,4,5].map(n => {
+                          const isFull = record.atmosphere_rating! >= n * 2;
+                          const isHalf = !isFull && record.atmosphere_rating! >= n * 2 - 1;
+                          return (
+                            <div key={n} className="relative flex-shrink-0" style={{ width: 13, height: 13 }}>
+                              <Star size={13} fill="none" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-40" />
+                              {(isFull || isHalf) && (
+                                <div className="absolute overflow-hidden" style={{ width: isFull ? 13 : 6.5, height: 13 }}>
+                                  <Star size={13} fill="#D4AF37" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-80" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <span className="cormorant text-[#D4AF37]/60 text-sm ml-1">{record.atmosphere_rating}<span className="text-xs opacity-60">/10</span></span>
+                      </div>
                     </div>
                   )}
 
