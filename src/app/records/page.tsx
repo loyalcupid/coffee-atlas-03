@@ -147,7 +147,7 @@ export default function MyRecords() {
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <h3 className="text-lg font-bold text-coffee-brown">{record.name}</h3>
                                         <div className="flex items-center text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-0.5 rounded">
-                                            <Star size={12} fill="currentColor" /> {record.rating}
+                                            <Star size={12} fill="currentColor" /> {record.rating}<span className="font-normal opacity-60">/10</span>
                                         </div>
                                         {record.region && (
                                             <span className="text-xs text-coffee-brown/60 font-medium bg-coffee-brown/8 border border-coffee-brown/10 px-2 py-0.5 rounded-full">

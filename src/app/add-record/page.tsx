@@ -59,7 +59,7 @@ export default function AddRecord() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-    const [cafeRating, setCafeRating] = useState(3);
+    const [atmosphereRating, setAtmosphereRating] = useState(5);
     const [overallMemo, setOverallMemo] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -79,6 +79,10 @@ export default function AddRecord() {
     const removeOtherMenu = (index: number) => setOtherMenuItems(prev => prev.filter((_, i) => i !== index));
 
     const totalPrice = coffeeOrders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
+    const cafeRating = +(
+        [...coffeeOrders.map(o => o.coffeeRating), atmosphereRating]
+            .reduce((s, r) => s + r, 0) / (coffeeOrders.length + 1)
+    ).toFixed(1);
 
     const handleAtmosphereUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -111,6 +115,7 @@ export default function AddRecord() {
             const recordRef = await push(dbRef(db, "records"), {
                 name, location, region,
                 rating: cafeRating,
+                atmosphere_rating: atmosphereRating,
                 atmosphere_images: atmosphereImages,
                 overall_memo: overallMemo,
                 uid: user!.uid,
@@ -353,6 +358,10 @@ export default function AddRecord() {
                         </div>
                         <p className="text-xs text-coffee-brown/30 mt-1">최대 10장 · 카페 분위기 사진을 추가하세요</p>
                         <input type="file" accept="image/*" ref={fileInputRef} onChange={handleAtmosphereUpload} className="hidden" />
+                        <div className="space-y-3 pt-2">
+                            <p className="text-sm font-bold text-coffee-brown/60">분위기 점수 <span className="font-normal text-xs text-coffee-brown/40">(10점 만점)</span></p>
+                            <TenPointPicker value={atmosphereRating} onChange={setAtmosphereRating} />
+                        </div>
                     </FormSection>
 
                     {/* ── SECTION 4: 총평 ── */}
@@ -360,9 +369,14 @@ export default function AddRecord() {
                         <div className="space-y-5">
                             <div className="space-y-3">
                                 <p className="text-sm font-bold text-coffee-brown/60">
-                                    총평점 <span className="font-normal text-xs text-coffee-brown/40">(카페 전체)</span>
+                                    총평점 <span className="font-normal text-xs text-coffee-brown/40">(자동 계산)</span>
                                 </p>
-                                <StarPicker value={cafeRating} onChange={setCafeRating} activeClass="bg-yellow-400 text-yellow-900" />
+                                <div className="flex items-center gap-3">
+                                    <HalfStarDisplay rating={cafeRating} />
+                                    <span className="text-lg font-bold text-coffee-brown">{cafeRating}</span>
+                                    <span className="text-sm text-coffee-brown/40">/ 10점</span>
+                                </div>
+                                <p className="text-xs text-coffee-brown/30">커피 평점과 분위기 점수의 평균으로 자동 산정됩니다</p>
                             </div>
                             <div className="space-y-2">
                                 <p className="text-sm font-bold text-coffee-brown/60">총평글</p>
@@ -688,6 +702,27 @@ function StarPicker({ value, onChange, activeClass }: { value: number; onChange:
                     <Star size={20} fill={value >= s ? "currentColor" : "none"} />
                 </button>
             ))}
+        </div>
+    );
+}
+
+function HalfStarDisplay({ rating }: { rating: number }) {
+    return (
+        <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map(star => {
+                const isFull = rating >= star * 2;
+                const isHalf = !isFull && rating >= star * 2 - 1;
+                return (
+                    <div key={star} className="relative flex-shrink-0" style={{ width: 20, height: 20 }}>
+                        <Star size={20} className="absolute text-gray-200" fill="none" />
+                        {(isFull || isHalf) && (
+                            <div className="absolute overflow-hidden" style={{ width: isFull ? 20 : 10, height: 20 }}>
+                                <Star size={20} className="absolute text-yellow-400" fill="currentColor" />
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

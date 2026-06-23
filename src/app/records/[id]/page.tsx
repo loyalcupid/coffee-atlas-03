@@ -25,7 +25,8 @@ export default function RecordDetail() {
     // Edit states
     const [name, setName] = useState("");
     const [location, setLocation] = useState("");
-    const [rating, setRating] = useState(3);
+    const [rating, setRating] = useState(5);
+    const [atmosphereRating, setAtmosphereRating] = useState(5);
     const [overallMemo, setOverallMemo] = useState("");
     const [atmosphereImages, setAtmosphereImages] = useState<string[]>([]);
 
@@ -55,7 +56,8 @@ export default function RecordDetail() {
                 setRecord(recData);
                 setName(recData.name);
                 setLocation(recData.location);
-                setRating(recData.rating);
+                setRating(recData.rating ?? 5);
+                setAtmosphereRating(recData.atmosphere_rating ?? 5);
                 setOverallMemo(recData.overall_memo || "");
                 setAtmosphereImages(recData.atmosphere_images || []);
 
@@ -231,8 +233,11 @@ export default function RecordDetail() {
     };
 
     const handleUpdateBasicInfo = async () => {
-        await update(dbRef(db, `records/${params.id}`), { name, location, rating, overall_memo: overallMemo });
-        setRecord({ ...record, name, location, rating, overall_memo: overallMemo });
+        const allRatings = [...orders.map(o => o.rating ?? 0), atmosphereRating];
+        const computedRating = +(allRatings.reduce((s, r) => s + r, 0) / allRatings.length).toFixed(1);
+        await update(dbRef(db, `records/${params.id}`), { name, location, rating: computedRating, atmosphere_rating: atmosphereRating, overall_memo: overallMemo });
+        setRecord({ ...record, name, location, rating: computedRating, atmosphere_rating: atmosphereRating, overall_memo: overallMemo });
+        setRating(computedRating);
         setIsEditing(false);
     };
 
@@ -318,12 +323,14 @@ export default function RecordDetail() {
                                 <div className="flex items-center text-yellow-600 font-bold bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
                                     <Star size={18} fill="currentColor" className="mr-1.5" />
                                     {isEditing ? (
-                                        <select value={rating} onChange={e => setRating(Number(e.target.value))} className="bg-transparent outline-none font-bold text-lg">
-                                            {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}
-                                        </select>
+                                        <span className="text-lg text-yellow-600/60">
+                                            {+([...orders.map(o => o.rating ?? 0), atmosphereRating]
+                                                .reduce((s, r) => s + r, 0) / (orders.length + 1)).toFixed(1)}
+                                        </span>
                                     ) : (
                                         <span className="text-lg">{record.rating}</span>
                                     )}
+                                    <span className="text-sm font-normal text-yellow-600/50 ml-0.5">/10</span>
                                 </div>
                                 <div className="text-sm text-coffee-brown/50 font-medium">
                                     방문 <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{visits.length}</span> 회
@@ -615,6 +622,17 @@ export default function RecordDetail() {
                             )}
                             <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
                         </div>
+                        <div className="space-y-2 pt-2">
+                            <span className="text-sm text-coffee-brown/60 font-medium">분위기 점수</span>
+                            {isEditing ? (
+                                <TenPointPicker value={atmosphereRating} onChange={setAtmosphereRating} />
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-coffee-brown">{record.atmosphere_rating ?? atmosphereRating}</span>
+                                    <span className="text-xs text-coffee-brown/40">/ 10점</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <Divider />
@@ -625,17 +643,8 @@ export default function RecordDetail() {
                         <div className="space-y-4">
                             <div className="flex items-center gap-3">
                                 <span className="text-sm text-coffee-brown/50 font-medium w-16">총평점</span>
-                                <div className="flex gap-1.5">
-                                    {[1, 2, 3, 4, 5].map(s => (
-                                        <Star
-                                            key={s}
-                                            size={20}
-                                            fill={record.rating >= s ? "currentColor" : "none"}
-                                            className={record.rating >= s ? "text-yellow-400" : "text-coffee-brown/15"}
-                                        />
-                                    ))}
-                                </div>
-                                <span className="text-sm font-bold text-coffee-brown/60">{record.rating}점</span>
+                                <HalfStarDisplay rating={record.rating ?? 0} />
+                                <span className="text-sm font-bold text-coffee-brown/60">{record.rating}/10점</span>
                             </div>
 
                             <div className="space-y-2">
@@ -844,6 +853,51 @@ function SectionLabel({ icon, text }: { icon: React.ReactNode; text: string }) {
         <div className="flex items-center gap-2 text-sm font-bold text-coffee-brown/60">
             {icon}
             <span className="uppercase tracking-wider text-xs">{text}</span>
+        </div>
+    );
+}
+
+function TenPointPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+    return (
+        <div className="space-y-2">
+            <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                    <button
+                        key={n}
+                        type="button"
+                        onClick={() => onChange(n)}
+                        className={`h-10 rounded-xl font-bold text-sm transition-all ${
+                            value === n
+                                ? "bg-coffee-accent text-coffee-brown shadow-md scale-105"
+                                : "bg-coffee-brown/5 text-coffee-brown/50 hover:bg-coffee-brown/10"
+                        }`}
+                    >
+                        {n}
+                    </button>
+                ))}
+            </div>
+            <p className="text-xs text-coffee-brown/30 text-right">{value} / 10점</p>
+        </div>
+    );
+}
+
+function HalfStarDisplay({ rating }: { rating: number }) {
+    return (
+        <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map(star => {
+                const isFull = rating >= star * 2;
+                const isHalf = !isFull && rating >= star * 2 - 1;
+                return (
+                    <div key={star} className="relative flex-shrink-0" style={{ width: 20, height: 20 }}>
+                        <Star size={20} className="absolute text-gray-200" fill="none" />
+                        {(isFull || isHalf) && (
+                            <div className="absolute overflow-hidden" style={{ width: isFull ? 20 : 10, height: 20 }}>
+                                <Star size={20} className="absolute text-yellow-400" fill="currentColor" />
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

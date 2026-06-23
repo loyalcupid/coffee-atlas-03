@@ -352,17 +352,23 @@ function ReputationContent() {
 
                   <div className="flex-shrink-0 text-right space-y-2">
                     <div className="flex items-center gap-1 justify-end">
-                      {[1,2,3,4,5].map(n => (
-                        <Star key={n} size={13}
-                          fill={cafe.avgCafeRating >= n ? "#D4AF37" : "none"}
-                          stroke="#D4AF37"
-                          strokeWidth={1.5}
-                          className="opacity-80"
-                        />
-                      ))}
+                      {[1,2,3,4,5].map(n => {
+                        const isFull = cafe.avgCafeRating >= n * 2;
+                        const isHalf = !isFull && cafe.avgCafeRating >= n * 2 - 1;
+                        return (
+                          <div key={n} className="relative flex-shrink-0" style={{ width: 13, height: 13 }}>
+                            <Star size={13} fill="none" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-40" />
+                            {(isFull || isHalf) && (
+                              <div className="absolute overflow-hidden" style={{ width: isFull ? 13 : 6.5, height: 13 }}>
+                                <Star size={13} fill="#D4AF37" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-80" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                     {cafe.avgCafeRating > 0 && (
-                      <p className="playfair text-2xl font-bold text-[#D4AF37]">{cafe.avgCafeRating}</p>
+                      <p className="playfair text-2xl font-bold text-[#D4AF37]">{cafe.avgCafeRating}<span className="text-sm font-normal text-[#D4AF37]/50">/10</span></p>
                     )}
                     <p className="cormorant text-[#FCF5E5]/35 text-sm">{cafe.visitCount}회 방문</p>
                   </div>

@@ -207,17 +207,23 @@ function CafeDetailContent() {
             </div>
             <div className="flex-shrink-0 text-right space-y-2">
               <div className="flex items-center gap-1 justify-end">
-                {[1,2,3,4,5].map(n => (
-                  <Star key={n} size={13}
-                    fill={avgCafeRating >= n ? "#D4AF37" : "none"}
-                    stroke="#D4AF37"
-                    strokeWidth={1.5}
-                    className="opacity-80"
-                  />
-                ))}
+                {[1,2,3,4,5].map(n => {
+                  const isFull = avgCafeRating >= n * 2;
+                  const isHalf = !isFull && avgCafeRating >= n * 2 - 1;
+                  return (
+                    <div key={n} className="relative flex-shrink-0" style={{ width: 13, height: 13 }}>
+                      <Star size={13} fill="none" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-40" />
+                      {(isFull || isHalf) && (
+                        <div className="absolute overflow-hidden" style={{ width: isFull ? 13 : 6.5, height: 13 }}>
+                          <Star size={13} fill="#D4AF37" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-80" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               {avgCafeRating > 0 && (
-                <p className="playfair text-2xl font-bold text-[#D4AF37]">{avgCafeRating}</p>
+                <p className="playfair text-2xl font-bold text-[#D4AF37]">{avgCafeRating}<span className="text-sm font-normal text-[#D4AF37]/50">/10</span></p>
               )}
               <p className="cormorant text-[#FCF5E5]/35 text-sm">{visits.length}회 방문</p>
             </div>
@@ -271,14 +277,21 @@ function CafeDetailContent() {
                     </div>
                     {record.rating > 0 && (
                       <div className="flex items-center gap-1">
-                        {[1,2,3,4,5].map(n => (
-                          <Star key={n} size={12}
-                            fill={record.rating >= n ? "#D4AF37" : "none"}
-                            stroke="#D4AF37"
-                            strokeWidth={1.5}
-                          />
-                        ))}
-                        <span className="cormorant text-[#D4AF37]/60 text-xs ml-1">{record.rating}</span>
+                        {[1,2,3,4,5].map(n => {
+                          const isFull = record.rating >= n * 2;
+                          const isHalf = !isFull && record.rating >= n * 2 - 1;
+                          return (
+                            <div key={n} className="relative flex-shrink-0" style={{ width: 12, height: 12 }}>
+                              <Star size={12} fill="none" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-40" />
+                              {(isFull || isHalf) && (
+                                <div className="absolute overflow-hidden" style={{ width: isFull ? 12 : 6, height: 12 }}>
+                                  <Star size={12} fill="#D4AF37" stroke="#D4AF37" strokeWidth={1.5} className="absolute opacity-80" />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <span className="cormorant text-[#D4AF37]/60 text-xs ml-1">{record.rating}<span className="text-[10px] opacity-60">/10</span></span>
                       </div>
                     )}
                   </div>
