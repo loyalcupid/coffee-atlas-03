@@ -13,14 +13,19 @@ export default function MyRecords() {
     const { user, authLoading } = useRequireAuth();
     const [records, setRecords] = useState<RecordSummary[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [regionFilter, setRegionFilter] = useState<Region | "">();
 
     useEffect(() => {
         if (!user) return;
+        setFetchError(null);
         fetchRecordsWithDetails(user.uid)
             .then(setRecords)
-            .catch((err) => console.error('Error fetching records:', err))
+            .catch((err) => {
+                console.error('Error fetching records:', err);
+                setFetchError(err?.message || '데이터를 불러오는 데 실패했습니다.');
+            })
             .finally(() => setLoading(false));
     }, [user]);
 
@@ -116,6 +121,13 @@ export default function MyRecords() {
 
                 {/* Records List */}
                 <div className="space-y-4">
+                    {fetchError && (
+                        <div className="text-center py-10 bg-red-50 rounded-2xl border border-red-200">
+                            <p className="text-red-600 font-bold mb-1">기록을 불러오지 못했습니다</p>
+                            <p className="text-red-400 text-sm">{fetchError}</p>
+                            <p className="text-red-400 text-xs mt-2">Firebase 보안 규칙 또는 로그인 상태를 확인해주세요.</p>
+                        </div>
+                    )}
                     {loading ? (
                         <div className="text-center py-20">
                             <div className="animate-spin w-8 h-8 border-4 border-coffee-brown border-t-transparent rounded-full mx-auto mb-4"></div>
