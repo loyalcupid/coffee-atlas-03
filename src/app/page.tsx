@@ -6,7 +6,7 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, Shield, UserCircle } from "lucide-react";
 
-const ADMIN_EMAIL = "doin25@gmail.com";
+const ADMIN_EMAILS = ["doin25@gmail.com", "loyalcupid@naver.com"];
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +32,7 @@ export default function Home() {
           {!authLoading && (
             user ? (
               <div className="flex items-center gap-3">
-                {user.email === ADMIN_EMAIL && (
+                {ADMIN_EMAILS.includes(user.email ?? "") && (
                   <Link
                     href="/admin"
                     className="flex items-center gap-1.5 bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/25 transition-all px-3 py-1 rounded-full text-xs font-bold cormorant tracking-widest uppercase"

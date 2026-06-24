@@ -9,7 +9,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { Home, MapPin, Users, Coffee, Clock, BookOpen, ChevronLeft, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 
-const ADMIN_EMAIL = "doin25@gmail.com";
+const ADMIN_EMAILS = ["doin25@gmail.com", "loyalcupid@naver.com"];
 
 interface ExpertCafe {
   id: string;
@@ -44,7 +44,7 @@ export default function ExpertCafeDetailPage() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      setIsAdmin(u?.email === ADMIN_EMAIL);
+      setIsAdmin(ADMIN_EMAILS.includes(u?.email ?? ""));
     });
     return () => unsub();
   }, []);

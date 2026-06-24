@@ -11,7 +11,7 @@ import {
   Mail, Calendar, ChevronRight, Wrench,
 } from "lucide-react";
 
-const ADMIN_EMAIL = "doin25@gmail.com";
+const ADMIN_EMAILS = ["doin25@gmail.com", "loyalcupid@naver.com"];
 
 interface UserRecord {
   uid: string;
@@ -50,7 +50,7 @@ export default function AdminPage() {
   /* ── 관리자 인증 확인 ── */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u || u.email !== ADMIN_EMAIL) {
+      if (!u || !ADMIN_EMAILS.includes(u.email ?? "")) {
         router.replace("/");
         return;
       }
@@ -166,7 +166,7 @@ export default function AdminPage() {
           </div>
           <h2 className="cafe-sign-title text-4xl text-[#FCF5E5]">관리자 대시보드</h2>
           <p className="cormorant text-[#FCF5E5]/40 text-lg font-light">
-            {ADMIN_EMAIL} 계정으로 로그인됨
+            관리자 계정으로 로그인됨
           </p>
         </div>
 
@@ -364,7 +364,7 @@ export default function AdminPage() {
                 className={`flex items-center gap-2 bg-[#D4AF37] text-[#1a0f0a] px-6 py-3 rounded-xl text-sm font-bold hover:bg-[#e8c84a] transition-all playfair shadow-lg ${fixLoading ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 <Wrench size={15} />
-                {fixLoading ? "처리 중..." : `${ADMIN_EMAIL} 계정으로 귀속시키기`}
+                {fixLoading ? "처리 중..." : "현재 계정으로 귀속시키기"}
               </button>
             </div>
           </section>

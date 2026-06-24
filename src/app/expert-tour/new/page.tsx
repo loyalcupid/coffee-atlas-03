@@ -8,7 +8,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { ref as dbRef, push } from "firebase/database";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const ADMIN_EMAIL = "doin25@gmail.com";
+const ADMIN_EMAILS = ["doin25@gmail.com", "loyalcupid@naver.com"];
 import {
   Home, Camera, Plus, Trash2, Send, Users, MapPin, Coffee, Clock, BookOpen
 } from "lucide-react";
@@ -44,7 +44,7 @@ export default function NewExpertCafePage() {
   /* ── 관리자 전용 가드 ── */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u || u.email !== ADMIN_EMAIL) router.replace("/");
+      if (!u || !ADMIN_EMAILS.includes(u.email ?? "")) router.replace("/");
       else setAdminUid(u.uid);
     });
     return () => unsub();
