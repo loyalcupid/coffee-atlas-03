@@ -6,14 +6,15 @@ import { useRouter } from "next/navigation";
 import { auth, db, googleProvider } from "@/lib/firebase";
 import {
   updatePassword,
+  updateProfile,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   EmailAuthProvider,
   deleteUser,
 } from "firebase/auth";
-import { ref, remove } from "firebase/database";
+import { ref, remove, update } from "firebase/database";
 import { useRequireAuth } from "@/lib/useRequireAuth";
-import { Home, Lock, Trash2, User, Coffee } from "lucide-react";
+import { Home, Lock, Trash2, User, Coffee, Pencil } from "lucide-react";
 
 function getErrorMsg(code: string): string {
   const map: Record<string, string> = {
@@ -40,6 +41,12 @@ export default function MyPage() {
   const [pwError, setPwError]       = useState("");
   const [pwSuccess, setPwSuccess]   = useState(false);
 
+  const [nameInput, setNameInput]       = useState("");
+  const [nameLoading, setNameLoading]   = useState(false);
+  const [nameError, setNameError]       = useState("");
+  const [nameSuccess, setNameSuccess]   = useState(false);
+  const [editingName, setEditingName]   = useState(false);
+
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deletePw, setDeletePw]             = useState("");
   const [deleteLoading, setDeleteLoading]   = useState(false);
@@ -61,6 +68,27 @@ export default function MyPage() {
         year: "numeric", month: "long", day: "numeric",
       })
     : "-";
+
+  const handleNameChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNameError("");
+    setNameSuccess(false);
+    const trimmed = nameInput.trim();
+    if (!trimmed) { setNameError("이름을 입력해주세요."); return; }
+    if (trimmed.length > 20) { setNameError("이름은 20자 이하로 입력해주세요."); return; }
+    setNameLoading(true);
+    try {
+      await updateProfile(user, { displayName: trimmed });
+      await update(ref(db, `users/${user.uid}`), { displayName: trimmed });
+      setNameSuccess(true);
+      setEditingName(false);
+      setNameInput("");
+    } catch {
+      setNameError("이름 변경에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setNameLoading(false);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,6 +179,67 @@ export default function MyPage() {
           <div className="pt-2 border-t border-[#D4AF37]/10">
             <p className="cormorant text-[#FCF5E5]/35 text-sm">가입일 {joinedDate}</p>
           </div>
+        </div>
+
+        {/* 이름 변경 */}
+        <div className="sign-frame rounded-2xl p-6 space-y-4">
+          <h2 className="cormorant text-[#D4AF37] text-xs tracking-[0.3em] uppercase font-bold flex items-center gap-2">
+            <Pencil size={12} /> 이름 변경
+          </h2>
+
+          {!editingName ? (
+            <div className="flex items-center justify-between">
+              <p className="cormorant text-[#FCF5E5]/70 text-base">
+                {user.displayName || <span className="text-[#FCF5E5]/35 italic">이름 미설정</span>}
+              </p>
+              <button
+                onClick={() => { setEditingName(true); setNameInput(user.displayName || ""); setNameSuccess(false); setNameError(""); }}
+                className="text-xs px-3 py-1.5 rounded-lg border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-all cormorant tracking-wide"
+              >
+                변경
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleNameChange} className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#FCF5E5]/40 uppercase tracking-widest">새 이름</label>
+                <input
+                  type="text"
+                  value={nameInput}
+                  onChange={e => setNameInput(e.target.value)}
+                  placeholder="변경할 이름 입력 (최대 20자)"
+                  maxLength={20}
+                  autoFocus
+                  className="w-full px-4 py-3 rounded-xl bg-white/8 border border-[#D4AF37]/20 text-[#FCF5E5] placeholder-[#FCF5E5]/25 focus:outline-none focus:border-[#D4AF37]/50 focus:ring-1 focus:ring-[#D4AF37]/30 transition-all text-sm"
+                />
+              </div>
+
+              {nameError && (
+                <p className="text-red-400 text-sm text-center bg-red-400/10 rounded-lg py-2.5 px-4 border border-red-400/20">{nameError}</p>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setEditingName(false); setNameInput(""); setNameError(""); }}
+                  className="flex-1 border border-[#D4AF37]/20 text-[#FCF5E5]/50 py-3 rounded-xl font-bold text-sm hover:bg-white/5 transition-all playfair"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={nameLoading}
+                  className="flex-1 bg-[#D4AF37] text-[#1a0f0a] py-3 rounded-xl font-bold text-sm hover:bg-[#e8c84a] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 playfair"
+                >
+                  <Pencil size={14} /> {nameLoading ? "저장 중..." : "저장"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {nameSuccess && (
+            <p className="text-green-400 text-sm text-center bg-green-400/10 rounded-lg py-2.5 px-4 border border-green-400/20">이름이 성공적으로 변경되었습니다.</p>
+          )}
         </div>
 
         {/* 비밀번호 변경 */}
