@@ -69,7 +69,7 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <section className="w-full max-w-6xl px-6 pt-12 pb-0 flex flex-col items-center text-center space-y-10">
+      <section className="w-full max-w-6xl px-3 pt-12 pb-0 flex flex-col items-center text-center space-y-10">
 
         {/* Logo */}
         <img
@@ -79,7 +79,7 @@ export default function Home() {
         />
 
         {/* Cafe Signboard */}
-        <div className="sign-frame rounded-2xl px-12 py-12 md:px-20 md:py-16 flex flex-col items-center space-y-6 w-full max-w-3xl">
+        <div className="sign-frame rounded-2xl px-6 py-7 md:px-12 md:py-10 flex flex-col items-center space-y-4 w-full max-w-3xl">
 
           {/* Top ornament */}
           <div className="gold-divider w-full text-[#D4AF37]/60 text-xs tracking-[0.4em] uppercase cormorant">
@@ -105,7 +105,7 @@ export default function Home() {
           </div>
 
           {/* Subtitle */}
-          <p className="cormorant text-[#FCF5E5]/60 text-xl md:text-2xl leading-relaxed max-w-lg font-light">
+          <p className="cormorant text-[#FCF5E5]/60 text-sm md:text-lg leading-relaxed max-w-lg font-light">
             어떤 카페가 좋았나요?<br />
             그날의 향기와 맛을 기록하고<br />
             당신만의 특별한 커피일기를 만들어보세요.
@@ -124,31 +124,31 @@ export default function Home() {
       </section>
 
       {/* Section Divider */}
-      <div className="w-full max-w-6xl px-6 flex flex-col items-center gap-2 my-10">
+      <div className="w-full max-w-6xl px-3 flex flex-col items-center gap-2 my-10">
         <div className="w-full flex items-center gap-4">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/70 to-[#D4AF37]/85" />
-          <div className="flex items-center gap-2.5 text-[#D4AF37]/90">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#6B3A2A]/70 to-[#6B3A2A]/85" />
+          <div className="flex items-center gap-2.5 text-[#6B3A2A]/90">
             <span className="text-[10px]">◆</span>
-            <span className="cormorant text-xs tracking-[0.45em] uppercase text-[#D4AF37]/85">My Journey</span>
+            <span className="cormorant text-xs tracking-[0.45em] uppercase text-[#6B3A2A]/85">My Journey</span>
             <span className="text-[10px]">◆</span>
           </div>
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[#D4AF37]/70 to-[#D4AF37]/85" />
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-[#6B3A2A]/70 to-[#6B3A2A]/85" />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/60" />
-          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]/75" />
-          <span className="w-1 h-1 rounded-full bg-[#D4AF37]/60" />
+          <span className="w-1 h-1 rounded-full bg-[#6B3A2A]/60" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#6B3A2A]/75" />
+          <span className="w-1 h-1 rounded-full bg-[#6B3A2A]/60" />
         </div>
       </div>
 
       {/* My Cafe Story + My Cafe Map Banner */}
-      <section className="w-full max-w-6xl px-6 pb-5">
+      <section className="w-full max-w-6xl px-3 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href={guardedHref("/records")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-5 py-5 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <ScrollText size={26} />
                 </div>
                 <div className="text-left">
@@ -166,10 +166,10 @@ export default function Home() {
           </Link>
 
           <Link href={guardedHref("/map")} className="group block">
-            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-8 py-8 overflow-hidden h-full">
+            <div className="relative flex items-center justify-between rounded-2xl border border-[#D4AF37]/30 bg-[#5C3A25] hover:bg-[#6B4530] transition-all px-5 py-5 overflow-hidden h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37]/0 via-[#D4AF37]/5 to-[#D4AF37]/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                   <Map size={26} />
                 </div>
                 <div className="text-left">
