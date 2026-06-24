@@ -166,7 +166,7 @@ function LoginForm() {
             </div>
           </div>
           <h1 className="cafe-sign-title text-3xl text-[#FCF5E5]">Coffee Atlas</h1>
-          <p className="cormorant text-[#FCF5E5]/40 text-lg">로그인하여 나만의 커피 기록을 시작하세요.</p>
+          <p className="cormorant text-[#FCF5E5]/40 text-xs">로그인하여 나만의 커피 기록을 시작하세요.</p>
         </div>
 
         {/* 인앱 브라우저 안내 배너 */}
@@ -275,12 +275,12 @@ function LoginForm() {
 
           {/* 항상 표시되는 비밀번호 찾기 링크 */}
           {!showResetHint && !resetSent && (
-            <p className="text-center cormorant text-[#FCF5E5]/25 text-sm">
+            <p className="text-center cormorant text-white text-sm">
               <button
                 type="button"
                 onClick={handlePasswordReset}
                 disabled={loading}
-                className="hover:text-[#FCF5E5]/50 transition-colors disabled:opacity-50"
+                className="hover:text-white/70 transition-colors disabled:opacity-50"
               >
                 비밀번호 찾기(재설정)
               </button>
