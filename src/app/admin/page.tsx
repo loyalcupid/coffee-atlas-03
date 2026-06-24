@@ -38,14 +38,14 @@ function formatDate(ts: number) {
 export default function AdminPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const [isAdmin, setIsAdmin]         = useState(false);
-  const [adminUid, setAdminUid]       = useState("");
-  const [users, setUsers]             = useState<UserRecord[]>([]);
-  const [cafes, setCafes]             = useState<ExpertCafe[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminUid, setAdminUid] = useState("");
+  const [users, setUsers] = useState<UserRecord[]>([]);
+  const [cafes, setCafes] = useState<ExpertCafe[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
   const [cafesLoading, setCafesLoading] = useState(true);
   const [orphanRecords, setOrphanRecords] = useState<{ id: string; name: string }[]>([]);
-  const [fixLoading, setFixLoading]   = useState(false);
+  const [fixLoading, setFixLoading] = useState(false);
 
   /* ── 관리자 인증 확인 ── */
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function AdminPage() {
 
   const fixOrphanRecords = async () => {
     if (orphanRecords.length === 0) return;
-    if (!confirm(`uid가 없는 기록 ${orphanRecords.length}개를 현재 관리자 계정(${ADMIN_EMAIL})으로 귀속시키겠습니까?`)) return;
+    if (!confirm(`uid가 없는 기록 ${orphanRecords.length}개를 현재 관리자 계정(${ADMIN_EMAILS[0]})으로 귀속시키겠습니까?`)) return;
     setFixLoading(true);
     try {
       await Promise.all(
@@ -236,11 +236,10 @@ export default function AdminPage() {
                   </span>
 
                   {/* 가입 수단 */}
-                  <span className={`cormorant text-xs px-2.5 py-0.5 rounded-full border w-fit ${
-                    u.provider === "google.com"
+                  <span className={`cormorant text-xs px-2.5 py-0.5 rounded-full border w-fit ${u.provider === "google.com"
                       ? "border-blue-500/40 text-blue-300 bg-blue-900/20"
                       : "border-[#D4AF37]/30 text-[#D4AF37]/80 bg-[#D4AF37]/10"
-                  }`}>
+                    }`}>
                     {u.provider === "google.com" ? "Google" : "이메일"}
                   </span>
 
