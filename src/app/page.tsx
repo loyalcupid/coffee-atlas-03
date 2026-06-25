@@ -197,7 +197,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             <Link href="/reputation" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border-2 border-[#FCF5E5] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Star size={28} />
               </div>
               <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">전국 카페 평판</h3>
@@ -207,7 +207,7 @@ export default function Home() {
             </Link>
 
             <Link href="/expert-tour" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border-2 border-[#FCF5E5] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Users size={28} />
               </div>
               <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">커피 고수 탐방</h3>
@@ -217,7 +217,7 @@ export default function Home() {
             </Link>
 
             <Link href="/encyclopedia" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border-2 border-[#FCF5E5] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Library size={28} />
               </div>
               <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">커피 백과사전</h3>
