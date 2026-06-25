@@ -197,30 +197,30 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
             <Link href="/reputation" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25]/50 bg-[#5C3A25]/10 text-[#5C3A25] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#5C3A25]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Star size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-black group-hover:text-[#D4AF37] transition-colors">전국 카페 평판</h3>
+              <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">전국 카페 평판</h3>
               <p className="cormorant text-black text-lg font-light leading-snug">
                 전국 카페들의 실제 방문<br />후기와 평점을 확인하세요.
               </p>
             </Link>
 
             <Link href="/expert-tour" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25]/50 bg-[#5C3A25]/10 text-[#5C3A25] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#5C3A25]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Users size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-black group-hover:text-[#D4AF37] transition-colors">커피 고수 탐방</h3>
+              <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">커피 고수 탐방</h3>
               <p className="cormorant text-black text-lg font-light leading-snug">
                 전문가들의 추천 카페와<br />브루잉 노하우를 만나보세요.
               </p>
             </Link>
 
             <Link href="/encyclopedia" className="space-y-4 flex flex-col items-center group cursor-pointer">
-              <div className="w-16 h-16 border border-[#5C3A25]/50 bg-[#5C3A25]/10 text-[#5C3A25] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#5C3A25]/20 group-hover:scale-110 transition-all">
+              <div className="w-16 h-16 border border-[#D4AF37]/50 bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/20 group-hover:scale-110 transition-all">
                 <Library size={28} />
               </div>
-              <h3 className="playfair text-xl font-bold text-black group-hover:text-[#D4AF37] transition-colors">커피 백과사전</h3>
+              <h3 className="playfair text-xl font-extrabold text-black group-hover:text-[#D4AF37] transition-colors">커피 백과사전</h3>
               <p className="cormorant text-black text-lg font-light leading-snug">
                 원두·브루잉·음료까지<br />커피의 모든 지식을 담았습니다.
               </p>
