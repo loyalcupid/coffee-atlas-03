@@ -761,7 +761,7 @@ export default function EncyclopediaPage() {
           <h2 className="cafe-sign-title text-4xl md:text-5xl text-[#FCF5E5]">
             커피의 모든 것
           </h2>
-          <p className="cormorant text-[#FCF5E5]/50 text-xl font-light max-w-xl mx-auto leading-relaxed">
+          <p className="cormorant text-[#FCF5E5]/50 text-sm font-light max-w-xl mx-auto leading-relaxed">
             원두의 산지부터 추출 방식, 맛의 언어까지<br />커피를 더 깊이 이해하는 지식 사전
           </p>
         </div>
