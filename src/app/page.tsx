@@ -5,6 +5,7 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { Map, Star, Users, ScrollText, LogIn, LogOut, Library, Shield, UserCircle } from "lucide-react";
+import CoffeeQuizSection from "@/components/CoffeeQuizSection";
 
 const ADMIN_EMAILS = ["doin25@gmail.com", "loyalcupid@naver.com"];
 
@@ -228,6 +229,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Coffee Level Test Section */}
+      <CoffeeQuizSection user={user} />
 
       {/* Footer */}
       <footer className="w-full py-10 text-center bg-[#5C3A25] border-t border-white/10 mt-auto">

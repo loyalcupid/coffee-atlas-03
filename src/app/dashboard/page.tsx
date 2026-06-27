@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, Droplets, Layers, Candy, Wheat, Wind, Scale } from "lucide-react";
+import { Coffee, Star, Home, Calendar, MapPin, Award, ChevronRight, TrendingUp, Droplets, Layers, Candy, Wheat, Wind, Scale, Brain } from "lucide-react";
 import Link from "next/link";
 import { db, snapToArray } from "@/lib/firebase";
 import { ref, get } from "firebase/database";
@@ -115,14 +115,16 @@ export default function Dashboard() {
     const [visits,  setVisits]  = useState<Visit[]>([]);
     const [orders,  setOrders]  = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [quizLevel, setQuizLevel] = useState<{ label: string; score: number; total: number } | null>(null);
 
     useEffect(() => {
         if (!user) return;
         const load = async () => {
-            const [recSnap, visSnap, ordSnap] = await Promise.all([
+            const [recSnap, visSnap, ordSnap, userSnap] = await Promise.all([
                 get(ref(db, "records")),
                 get(ref(db, "visits")),
                 get(ref(db, "orders")),
+                get(ref(db, `users/${user.uid}`)),
             ]);
             const myRecords = snapToArray<CafeRecord>(recSnap).filter((r: any) => r.uid === user.uid);
             const myRecordIds = new Set(myRecords.map(r => r.id));
@@ -132,6 +134,12 @@ export default function Dashboard() {
             setRecords(myRecords);
             setVisits(myVisits);
             setOrders(myOrders);
+            if (userSnap.exists()) {
+                const u = userSnap.val();
+                if (u.coffeeQuizLevel) {
+                    setQuizLevel({ label: u.coffeeQuizLevel, score: u.coffeeQuizScore ?? 0, total: u.coffeeQuizTotal ?? 15 });
+                }
+            }
             setLoading(false);
         };
         load();
@@ -304,23 +312,41 @@ export default function Dashboard() {
 
                     {/* Top Drinks + Rating Level */}
                     <div className="space-y-4">
-                        {/* Rating Level */}
-                        <div className="bg-white rounded-3xl p-5 shadow-md border border-coffee-brown/5 flex items-center gap-4">
-                            <div className="w-14 h-14 bg-[#FCF5E5] rounded-2xl flex items-center justify-center border border-coffee-brown/10 flex-shrink-0">
-                                <Award size={28} className="text-coffee-brown" />
+                        {/* Rating Level + Quiz Level */}
+                        <div className="bg-white rounded-3xl p-5 shadow-md border border-coffee-brown/5 space-y-4">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-[#FCF5E5] rounded-2xl flex items-center justify-center border border-coffee-brown/10 flex-shrink-0">
+                                    <Award size={28} className="text-coffee-brown" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">평가 레벨</p>
+                                    <p className={`text-lg font-black ${ratingLevel.color}`}>{ratingLevel.label}</p>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                        {[1,2,3,4,5].map(n => (
+                                            <Star key={n} size={13}
+                                                fill={avgRating / 2 >= n ? "#D4AF37" : "none"}
+                                                stroke="#D4AF37"
+                                                strokeWidth={1.5}
+                                                className="transition-all" />
+                                        ))}
+                                        <span className="text-xs text-coffee-brown/40 ml-1">평균 {avgRating}/10점</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">나의 레벨</p>
-                                <p className={`text-lg font-black ${ratingLevel.color}`}>{ratingLevel.label}</p>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                    {[1,2,3,4,5].map(n => (
-                                        <Star key={n} size={13}
-                                            fill={avgRating / 2 >= n ? "#D4AF37" : "none"}
-                                            stroke="#D4AF37"
-                                            strokeWidth={1.5}
-                                            className="transition-all" />
-                                    ))}
-                                    <span className="text-xs text-coffee-brown/40 ml-1">평균 {avgRating}/10점</span>
+                            <div className="border-t border-coffee-brown/8 pt-4 flex items-center gap-4">
+                                <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center border border-[#D4AF37]/20 flex-shrink-0">
+                                    <Brain size={24} className="text-[#D4AF37]" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">커피 지식 레벨</p>
+                                    {quizLevel ? (
+                                        <>
+                                            <p className="text-lg font-black text-coffee-brown">{quizLevel.label}</p>
+                                            <p className="text-xs text-coffee-brown/40 mt-0.5">퀴즈 점수 {quizLevel.score}/{quizLevel.total}점</p>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-coffee-brown/35 font-medium">홈 화면에서 레벨 테스트를 해보세요</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
