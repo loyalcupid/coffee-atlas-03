@@ -195,22 +195,6 @@ export default function Dashboard() {
         return months;
     }, [visits]);
 
-    /* ── recent records ── */
-    const recentVisits = useMemo(() => {
-        const sorted = [...visits].sort((a, b) => (b.date > a.date ? 1 : -1)).slice(0, 4);
-        return sorted.map(v => {
-            const record = records.find(r => r.id === v.record_id);
-            const order  = orders.find(o => o.visit_id === v.id);
-            return { visit: v, record, order };
-        }).filter(x => x.record);
-    }, [visits, records, orders]);
-
-    /* ── rating level ── */
-    const ratingLevel =
-        avgRating >= 9 ? { label: "엄격한 미식가", color: "text-amber-600" } :
-        avgRating >= 7 ? { label: "커피 애호가",   color: "text-coffee-brown" } :
-        avgRating >  0 ? { label: "커피 입문자",   color: "text-coffee-brown/60" } :
-                         { label: "기록 없음",     color: "text-coffee-brown/30" };
 
     if (authLoading || loading) return (
         <div className="min-h-screen bg-[#FCF5E5] flex items-center justify-center">
@@ -227,13 +211,9 @@ export default function Dashboard() {
             {/* ── Hero Header ── */}
             <div className="bg-gradient-to-br from-[#2A1A10] via-[#3D2B1F] to-[#5C3D2E] text-white px-6 pt-8 pb-14 md:px-12">
                 <div className="max-w-5xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center mb-8">
                         <Link href="/" className="p-2 rounded-full hover:bg-white/10 transition-colors">
                             <Home size={22} />
-                        </Link>
-                        <Link href="/add-record"
-                            className="bg-[#D4AF37] text-[#2A1A10] px-5 py-2 rounded-full text-sm font-bold hover:bg-yellow-300 transition-all shadow-lg">
-                            + 기록 추가
                         </Link>
                     </div>
                     <div className="space-y-1 mb-6">
@@ -312,42 +292,21 @@ export default function Dashboard() {
 
                     {/* Top Drinks + Rating Level */}
                     <div className="space-y-4">
-                        {/* Rating Level + Quiz Level */}
-                        <div className="bg-white rounded-3xl p-5 shadow-md border border-coffee-brown/5 space-y-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-[#FCF5E5] rounded-2xl flex items-center justify-center border border-coffee-brown/10 flex-shrink-0">
-                                    <Award size={28} className="text-coffee-brown" />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">평가 레벨</p>
-                                    <p className={`text-lg font-black ${ratingLevel.color}`}>{ratingLevel.label}</p>
-                                    <div className="flex items-center gap-1 mt-0.5">
-                                        {[1,2,3,4,5].map(n => (
-                                            <Star key={n} size={13}
-                                                fill={avgRating / 2 >= n ? "#D4AF37" : "none"}
-                                                stroke="#D4AF37"
-                                                strokeWidth={1.5}
-                                                className="transition-all" />
-                                        ))}
-                                        <span className="text-xs text-coffee-brown/40 ml-1">평균 {avgRating}/10점</span>
-                                    </div>
-                                </div>
+                        {/* Quiz Level */}
+                        <div className="bg-white rounded-3xl p-5 shadow-md border border-coffee-brown/5 flex items-center gap-4">
+                            <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center border border-[#D4AF37]/20 flex-shrink-0">
+                                <Brain size={24} className="text-[#D4AF37]" />
                             </div>
-                            <div className="border-t border-coffee-brown/8 pt-4 flex items-center gap-4">
-                                <div className="w-14 h-14 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center border border-[#D4AF37]/20 flex-shrink-0">
-                                    <Brain size={24} className="text-[#D4AF37]" />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">커피 지식 레벨</p>
-                                    {quizLevel ? (
-                                        <>
-                                            <p className="text-lg font-black text-coffee-brown">{quizLevel.label}</p>
-                                            <p className="text-xs text-coffee-brown/40 mt-0.5">퀴즈 점수 {quizLevel.score}/{quizLevel.total}점</p>
-                                        </>
-                                    ) : (
-                                        <p className="text-sm text-coffee-brown/35 font-medium">홈 화면에서 레벨 테스트를 해보세요</p>
-                                    )}
-                                </div>
+                            <div>
+                                <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest mb-0.5">나의 레벨</p>
+                                {quizLevel ? (
+                                    <>
+                                        <p className="text-lg font-black text-coffee-brown">{quizLevel.label}</p>
+                                        <p className="text-xs text-coffee-brown/40 mt-0.5">퀴즈 점수 {quizLevel.score}/{quizLevel.total}점</p>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-coffee-brown/35 font-medium">홈 화면에서 레벨 테스트를 해보세요</p>
+                                )}
                             </div>
                         </div>
 
@@ -368,7 +327,7 @@ export default function Dashboard() {
                                             <div key={i} className="space-y-1">
                                                 <div className="flex items-center justify-between text-sm">
                                                     <span className="flex items-center gap-2 font-semibold text-coffee-brown">
-                                                        <span>{medals[i] || `${i+1}.`}</span>
+                                                        <span>{medals[i]}</span>
                                                         <span className="truncate max-w-[140px]">{name}</span>
                                                     </span>
                                                     <span className="text-xs font-bold text-coffee-brown/50">{count}잔</span>
@@ -455,59 +414,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* ── Row 3: Recent Visit Timeline ── */}
-                <div className="bg-white rounded-3xl p-6 shadow-md border border-coffee-brown/5">
-                    <div className="flex items-center justify-between mb-5">
-                        <div>
-                            <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest">Recent Activity</p>
-                            <h2 className="text-coffee-brown font-black text-lg mt-0.5">최근 방문 기록</h2>
-                        </div>
-                        <Link href="/records" className="text-xs font-bold text-coffee-brown/50 hover:text-coffee-brown transition-colors flex items-center gap-1">
-                            전체 보기 <ChevronRight size={13} />
-                        </Link>
-                    </div>
-                    {recentVisits.length === 0 ? (
-                        <div className="text-center py-10">
-                            <Coffee size={36} className="mx-auto text-coffee-brown/10 mb-3" />
-                            <p className="text-coffee-brown/30 text-sm">아직 기록이 없습니다.</p>
-                            <Link href="/add-record" className="mt-3 inline-block text-sm font-bold text-coffee-brown hover:underline">첫 카페 기록하기 →</Link>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {recentVisits.map(({ visit, record, order }, i) => record && (
-                                <Link key={i} href={`/records/${record.id}`}
-                                    className="flex items-center gap-4 p-3 rounded-2xl hover:bg-[#FCF5E5] transition-colors group">
-                                    {/* date badge */}
-                                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-coffee-brown to-[#5C3D2E] rounded-xl flex flex-col items-center justify-center text-white shadow-md">
-                                        <span className="text-[10px] font-semibold opacity-70 leading-none">{visit.date?.slice(5,7)}월</span>
-                                        <span className="text-base font-black leading-none">{visit.date?.slice(8,10)}</span>
-                                    </div>
-                                    {/* info */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-coffee-brown group-hover:text-coffee-accent transition-colors truncate">{record.name}</p>
-                                        <div className="flex items-center gap-2 text-xs text-coffee-brown/40 mt-0.5">
-                                            {order?.drink_name && <span className="text-coffee-brown/60 font-medium">{order.drink_name}</span>}
-                                            {order?.drink_name && <span>·</span>}
-                                            <MapPin size={10} className="flex-shrink-0" />
-                                            <span className="truncate">{record.location}</span>
-                                        </div>
-                                    </div>
-                                    {/* taste mini-badges */}
-                                    {order && (
-                                        <div className="flex-shrink-0 flex items-center gap-2">
-                                            <div className="flex items-center gap-0.5 text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
-                                                <Star size={11} fill="currentColor" />{order.rating}<span className="font-normal">/10</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <ChevronRight size={16} className="text-coffee-brown/20 group-hover:text-coffee-brown transition-colors flex-shrink-0" />
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ── Row 4: Taste Deep Dive ── */}
+                {/* ── Row 3: Taste Deep Dive ── */}
                 <div className="bg-white rounded-3xl p-6 shadow-md border border-coffee-brown/5">
                     <div className="mb-5">
                         <p className="text-xs font-bold text-coffee-brown/40 uppercase tracking-widest">Taste Deep Dive</p>
