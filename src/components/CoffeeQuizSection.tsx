@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Brain, Trophy, CheckCircle, XCircle, ChevronRight } from "lucide-react";
+import { Brain, Trophy, CheckCircle, XCircle, ChevronRight, X } from "lucide-react";
 import { User } from "firebase/auth";
 import { ref, update } from "firebase/database";
 import { db } from "@/lib/firebase";
@@ -37,35 +37,32 @@ export default function CoffeeQuizSection({ user }: Props) {
 
   const handleAnswer = (choice: string | boolean) => {
     if (showFeedback) return;
-
-    const q = questions[current];
-    const correct = choice === q.answer;
-    const newAnswers = [...answers, correct];
-
+    const correct = choice === questions[current].answer;
     setSelected(choice);
     setShowFeedback(true);
-    setAnswers(newAnswers);
+    setAnswers(prev => [...prev, correct]);
+  };
 
-    setTimeout(() => {
-      if (current + 1 < questions.length) {
-        setCurrent(c => c + 1);
-        setSelected(null);
-        setShowFeedback(false);
-      } else {
-        const score = newAnswers.filter(Boolean).length;
-        const lvl = getCoffeeLevel(score, questions.length);
-        if (user) {
-          setSaveState("saving");
-          update(ref(db, `users/${user.uid}`), {
-            coffeeQuizLevel: lvl.label,
-            coffeeQuizScore: score,
-            coffeeQuizTotal: questions.length,
-            coffeeQuizDate: new Date().toISOString(),
-          }).then(() => setSaveState("saved")).catch(() => setSaveState("idle"));
-        }
-        setPhase("result");
+  const handleNext = () => {
+    const newAnswers = [...answers];
+    if (current + 1 < questions.length) {
+      setCurrent(c => c + 1);
+      setSelected(null);
+      setShowFeedback(false);
+    } else {
+      const score = newAnswers.filter(Boolean).length;
+      const lvl = getCoffeeLevel(score, questions.length);
+      if (user) {
+        setSaveState("saving");
+        update(ref(db, `users/${user.uid}`), {
+          coffeeQuizLevel: lvl.label,
+          coffeeQuizScore: score,
+          coffeeQuizTotal: questions.length,
+          coffeeQuizDate: new Date().toISOString(),
+        }).then(() => setSaveState("saved")).catch(() => setSaveState("idle"));
       }
-    }, 1600);
+      setPhase("result");
+    }
   };
 
   if (phase === "idle") {
@@ -107,7 +104,16 @@ export default function CoffeeQuizSection({ user }: Props) {
               <span className="cormorant text-[#D4AF37] text-sm tracking-[0.3em] uppercase">
                 {DIFFICULTY_LABEL[q.difficulty]} 수준
               </span>
-              <span className="cormorant text-white/55 text-sm">{current + 1} / {questions.length}</span>
+              <div className="flex items-center gap-3">
+                <span className="cormorant text-white/55 text-sm">{current + 1} / {questions.length}</span>
+                <button
+                  onClick={() => setPhase("idle")}
+                  className="text-white/50 hover:text-white transition-colors"
+                  aria-label="닫기"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
@@ -161,20 +167,17 @@ export default function CoffeeQuizSection({ user }: Props) {
               <div className="space-y-2 pt-1">
                 {q.options.map((opt, i) => {
                   const isSelected = selected === opt;
-                  const isAnswer = q.answer === opt;
                   let cls = "w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border ";
-                  if (showFeedback) {
-                    if (isAnswer) cls += "bg-green-100 border-green-400 text-green-700 shadow-sm";
-                    else if (isSelected) cls += "bg-red-100 border-red-400 text-red-600";
-                    else cls += "bg-white/60 border-[#D4AF37]/10 text-[#5C3A25]/40";
-                  } else if (isSelected) {
+                  if (isSelected) {
                     cls += "bg-[#D4AF37]/20 border-[#D4AF37] text-[#5C3A25]";
+                  } else if (showFeedback) {
+                    cls += "bg-white/60 border-[#D4AF37]/10 text-[#5C3A25]/40";
                   } else {
                     cls += "bg-white border-[#D4AF37]/20 text-[#5C3A25] hover:bg-[#D4AF37]/10 hover:border-[#D4AF37]/50";
                   }
                   return (
                     <button key={i} onClick={() => handleAnswer(opt)} disabled={showFeedback} className={cls}>
-                      <span className="text-[#D4AF37] font-black mr-2">{["①", "②", "③", "④"][i]}</span>
+                      <span className="font-black mr-2">{["①", "②", "③", "④"][i]}</span>
                       {opt}
                     </button>
                   );
@@ -197,11 +200,19 @@ export default function CoffeeQuizSection({ user }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 pb-4">
+          <div className="px-6 pb-5 space-y-3">
             <div className="flex justify-between text-xs text-[#5C3A25]/35 cormorant">
               <span>✓ 정답 {answers.filter(Boolean).length}개</span>
               <span>✗ 오답 {answers.filter(v => !v).length}개</span>
             </div>
+            {showFeedback && (
+              <button
+                onClick={handleNext}
+                className="w-full bg-[#5C3A25] text-[#FCF5E5] py-3 rounded-2xl font-bold text-sm hover:bg-[#6B4530] transition-all playfair"
+              >
+                {current + 1 < questions.length ? "확인" : "결과 보기"}
+              </button>
+            )}
           </div>
         </div>
       </div>
