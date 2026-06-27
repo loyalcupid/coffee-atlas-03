@@ -79,20 +79,7 @@ export default function CoffeeQuizSection({ user }: Props) {
             <div className="w-20 h-20 border-2 border-[#FCF5E5] bg-[#D4AF37]/10 text-[#D4AF37] rounded-2xl flex items-center justify-center shadow-lg">
               <Brain size={36} />
             </div>
-            <div className="space-y-3">
-              <h2 className="playfair text-3xl font-extrabold text-[#5C3A25]">나의 커피 레벨 테스트</h2>
-              <p className="cormorant text-[#5C3A25]/70 text-xl font-light leading-relaxed">
-                15문제로 알아보는 나의 커피 지식 수준<br />
-                기초 · 중급 · 고급 문제로 구성된 OX / 4지선다 퀴즈
-              </p>
-            </div>
-            <div className="flex items-center gap-5 text-sm text-[#5C3A25]/55 cormorant text-lg">
-              <span>📝 총 15문제</span>
-              <span>·</span>
-              <span>🎲 매번 랜덤 출제</span>
-              <span>·</span>
-              <span>⏱ 약 5분 소요</span>
-            </div>
+            <h2 className="playfair text-xl font-extrabold text-[#5C3A25]">나의 커피 레벨 테스트</h2>
             <button
               onClick={startQuiz}
               className="flex items-center gap-2 bg-[#5C3A25] text-[#FCF5E5] px-8 py-4 rounded-2xl font-bold text-base hover:bg-[#6B4530] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 playfair"
